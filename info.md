@@ -11,7 +11,7 @@ This is the core ledger of MakerDAO. It keeps track of everyone’s collateral, 
 This contract lets users deposit ERC20 tokens like WETH or WBTC into the system. Once deposited, the collateral gets recorded inside the Vat.
 
 💰 **3. DaiJoin (Stablecoin Gateway)**
-It connects the internal accounting system (Vat) with the actual ERC20 DAI token. When users mint or withdraw DAI, this contract handles that bridge.
+It connects the internal accounting system (Vat) with the actual ERC20 DAI token. When users mint or withdraw aka borrow DAI, this contract handles that bridge.
 
 🏦 **4. CDP Manager (Vault Manager)**
 This is the user-facing contract that manages vaults, it lets you open, modify, or close a vault, deposit collateral, and generate or repay DAI. we can think it like index book to keep track what is hapeming.
