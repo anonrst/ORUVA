@@ -11,8 +11,8 @@ contract CounterScript is Script {
 
     function run() public {
         vm.startBroadcast();
-
-        counter = new Counter();
+        uint256 tokenToMit = 300000000;
+        counter = new Counter(tokenToMit);
 
         vm.stopBroadcast();
     }
