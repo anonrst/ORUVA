@@ -1,0 +1,2 @@
+FLOW_SEPOLIA_EVM=https://testnet.evm.nodes.onflow.org
+PRIVATE_KEY=05563997b1cf584d32497cb33bc43167a324baaa5fe05d089e1d49b801a7b3bd
