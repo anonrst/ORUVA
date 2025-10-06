@@ -5,16 +5,96 @@ import {Auth} from "../lib/Auth.sol";
 import {CircuitBreaker} from "../lib/CircuitBreaker.sol";
 import {Math} from "../lib/Math.sol";
 
+// in this whole contract the collateral type exist because MakerDao designed to handle more than one type of collateral type so an here are two main fucntion one for modifyCollateralBalance aka slip it only chages the balance they have but another transferInrc aka move it move from one wallet to anoth and these works CDPEngine internally
 /// @title CDP Engine
-/// @notice Manages user collateral balances
+/// @notice Handles user collateral balances and stablecoin (INRC) movements
+//vat
 contract CDPEngine is Auth, CircuitBreaker {
-    // Mapping from collateral type => user address => balance
+    error CDPEngine_NotAllowedToModifyAccount();
+    error CDPEngine_KeyNotRecogNized(bytes32 key);
+    error CDPEngine_CollateralAlreadyInit();
+    // ilk
+    struct Collateral {
+        // the art is the debt the overall system has befoer componding to rate e.g. 1e18
+        // we  calcualte art with formula d0 / r0 + d1/ r1 on go on with accumulation so in result as we know the formula for finding debt is d = amount * rate so here as amount is our art so thier art = d / rate
+        //art
+        uint256 debt;
+        //rate
+        // htis is the accumulation of every rate
+        uint256 accRate;
+        // let assume safemargin is 0.2 ( 1 eth = $2000)
+        // formula for spot =  price * ( 1 - safeMargit)
+        // formula for spot = collateralPrice * (1 - 0.2 )= 2000 -400 = $1600
+        // so the maximum dai amount  user can borrow  is  = spot * collateralAmount = 2000 * ( 1- 0.2) * 1 = $1600 mean it can borrow 1600 amount of dai
+        // at time t price = 2000 = 1800 thenmac Borrow = 1800 * (1 - 0.2) * 1; 1440 amount of dai it can borrow
+        // so now as it's low from safety margin that was only for 1600 this mean now it'll liquidate and another guy will for this user dai and get his available eth still the dai will be in loo but the twiest its the liqudator got the 1 eth just by clear the whole debt by paying 1600 which was max borrow amount
+        uint256 spot;
+        // line
+        // the maxDebt we solved it
+        uint256 maxDebt;
+        // dust
+        // we need it because if liquidation ocst more than the amount of dai no one will liquididate so
+        uint256 minDebt;
+    }
+
+    // Urn aka CDP , or bolt (vault)
+    struct Position {
+        //  the colateral lockefd = ilk
+        uint256 collateral;
+        //the max borrow = art
+        uint256 debt;
+    }
+
+    mapping(bytes32 => Collateral) public collaterals;
+    mapping(bytes32 => mapping(address => Position)) public positions;
+
+    // Mapping: collateral type => user => balance
     mapping(bytes32 => mapping(address => uint)) public gem;
 
-    /// @notice Modify user's collateral balance
-    /// @param _collateralType The type of collateral
-    /// @param _user The user's address
-    /// @param _wad The amount to modify (can be negative)
+    // Mapping: user => stablecoin balance
+    mapping(address => uint256) public inrc;
+
+    // Mapping: owner => user => permission to modify balances
+    mapping(address => mapping(address => bool)) public can;
+    // line  refers to overall system maxdevt
+
+    uint256 public SystemMaxDebt;
+
+    function cage() external auth {
+        _stop();
+    }
+
+    // this is for initializing the auth it one works for once becase it need Rate_acc as 0;
+    function init(bytes32 _collType) external auth {
+        if (collaterals[_collType].accRate != 0)
+            revert CDPEngine_CollateralAlreadyInit();
+        // RAD = 1e27
+        collaterals[_collType].accRate = 10 ** 27;
+    }
+
+    // function file
+    function set(bytes32 _key, uint256 _val) public notStopped auth {
+        if (_key != "SystemMaxDebt") revert CDPEngine_KeyNotRecogNized(_key);
+        SystemMaxDebt = _val;
+    }
+
+    // this function is for setting collateral data based in collateral type
+    function set(
+        bytes32 _collType,
+        bytes32 _key,
+        uint256 _val
+    ) external auth notStopped {
+        if (_key == "spot") collaterals[_collType].spot = _val;
+        else if (_key == "maxDebt") collaterals[_collType].maxDebt = _val;
+        else if (_key == "minDebt") collaterals[_collType].minDebt = _val;
+        revert CDPEngine_KeyNotRecogNized(_key);
+    }
+
+    /// @notice Adjust a user's collateral balance (can be positive or negative)
+    /// @param _collateralType Type of collateral
+    /// @param _user User's address
+    /// @param _wad Amount to adjust (int: +add, -remove)
+    //slip
     function modifyCollateralBalance(
         bytes32 _collateralType,
         address _user,
@@ -24,5 +104,46 @@ contract CDPEngine is Auth, CircuitBreaker {
             gem[_collateralType][_user],
             _wad
         );
+    }
+
+    /// @notice Allow another account to modify your balances
+    /// @param _usr User to allow
+    function allowAccountModification(address _usr) external {
+        can[msg.sender][_usr] = true;
+    }
+
+    /// @notice Revoke permission from another account
+    /// @param _usr User to revoke
+    function denyAccountModification(address _usr) external {
+        can[msg.sender][_usr] = false;
+    }
+
+    /// @notice Check if a user is allowed to modify another account's balances
+    /// @param _owner Owner of the balances
+    /// @param _user User trying to modify
+    /// @return true if allowed
+    function _canModifyAccount(
+        address _owner,
+        address _user
+    ) internal view returns (bool) {
+        return _owner == _user || can[_owner][_user];
+    }
+
+    /// @notice Transfer INRC between users internally
+    /// @param _source Sender
+    /// @param _destination Receiver
+    /// @param _rad Amount to transfer
+    //move
+    function transferInrc(
+        address _source,
+        address _destination,
+        uint256 _rad
+    ) external {
+        if (!_canModifyAccount(_source, msg.sender))
+            revert CDPEngine_NotAllowedToModifyAccount();
+
+        // Deduct from source and add to destination
+        inrc[_source] -= _rad;
+        inrc[_destination] += _rad;
     }
 }

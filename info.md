@@ -1,16 +1,17 @@
-
-I’m currently studying how MakerDAO’s stablecoin system works, and I’ve learned that it’s made up of **modular smart contracts that all interact with each other to make the DAI stablecoin possible.
+I’m currently studying how MakerDAO’s stablecoin system works, and I’ve learned that it’s made up of \*\*modular smart contracts that all interact with each other to make the DAI stablecoin possible.
+and as we are borrowing stableCoin using someone's else money we have to pay extra in easy worjd we have to pay interest and this interest in stableCoin is called as stabilityFee;
+and the stability fee will change every second as increases exponentially that ans we know that htis calculation can also return in decimals e.g. 023.223 and as we know their is no concept of it in evm ecosystem and this the reason why we increse the value with RAD that 1e45 that cant cause error. and also one more important thing that stability fee can volatile every second mean its not fixed. 
 
 One of the key parts is the **Vat** contract, it’s like the **heart of the whole system**, where all collateral and debt balances are tracked.
 Each user creates a **CDP (Collateralized Debt Position)**, also called a **vault**, where they lock collateral to generate DAI.
 
-🧠 **1. Vat (Core Accounting)**
+🧠 **1. Vat (Core Accounting)** in our code base its called as CDPEngine
 This is the core ledger of MakerDAO. It keeps track of everyone’s collateral, debt, and the overall balances of the system. Every other module connects to this one.
 
 💎 **2. GemJoin (Collateral Gateway)**
 This contract lets users deposit ERC20 tokens like WETH or WBTC into the system. Once deposited, the collateral gets recorded inside the Vat.
 
-💰 **3. DaiJoin (Stablecoin Gateway)**
+💰 **3. DaiJoin (Stablecoin Gateway)** in our code base its called as INRCJoin
 It connects the internal accounting system (Vat) with the actual ERC20 DAI token. When users mint or withdraw aka borrow DAI, this contract handles that bridge.
 
 🏦 **4. CDP Manager (Vault Manager)**
