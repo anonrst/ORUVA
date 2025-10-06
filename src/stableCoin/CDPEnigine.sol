@@ -11,9 +11,16 @@ import {Math} from "../lib/Math.sol";
 //vat
 contract CDPEngine is Auth, CircuitBreaker {
     error CDPEngine_NotAllowedToModifyAccount();
+    error CDPEngine_NotAllowedToModifyAccountGemSource();
     error CDPEngine_KeyNotRecogNized(bytes32 key);
+    error CDPEngine_NotSafe();
     error CDPEngine_CollateralAlreadyInit();
+    error CDPEngine_CollateralNotInitialized();
+    error CDPEngine_MinimunDebtExceeded();
+    error CDPEngine_NotAllowedToModifyAccountINRCDest();
+    error CDPEngine_MaxDebtExceeded();
     // ilk
+
     struct Collateral {
         // the art is the debt the overall system has befoer componding to rate e.g. 1e18
         // we  calcualte art with formula d0 / r0 + d1/ r1 on go on with accumulation so in result as we know the formula for finding debt is d = amount * rate so here as amount is our art so thier art = d / rate
@@ -49,7 +56,7 @@ contract CDPEngine is Auth, CircuitBreaker {
     mapping(bytes32 => mapping(address => Position)) public positions;
 
     // Mapping: collateral type => user => balance
-    mapping(bytes32 => mapping(address => uint)) public gem;
+    mapping(bytes32 => mapping(address => uint256)) public gem;
 
     // Mapping: user => stablecoin balance
     mapping(address => uint256) public inrc;
@@ -57,25 +64,90 @@ contract CDPEngine is Auth, CircuitBreaker {
     // Mapping: owner => user => permission to modify balances
     mapping(address => mapping(address => bool)) public can;
     // line  refers to overall system maxdevt
-
-    uint256 public SystemMaxDebt;
+    // total inrc Ceinling mean the last stoplostt;
+    uint256 public systemMaxDebt;
+    //total cuurernt DEbT
+    uint256 public systemDebt;
 
     function cage() external auth {
         _stop();
     }
 
+    // this function will modify the CDP overal mint burnlocak and unlock
+    // frob arggs i, u, v, w, dink, dart
+    // i mean the collateral type
+    // u modifing position Of  user U mean that address that maps the CDP
+    // v useing gem(collateral) of user v aka source
+    // creating coin (inrc) for user w aka dest
+    // dink is basically the change in  collateral like increse and decrease
+    // dark is chanage is amount of DEbt;
+    function frob(
+        bytes32 _collType,
+        address _cdp,
+        address _gemSource,
+        address _inrcDest,
+        int256 _deltaCollat,
+        int256 _deltaDebt
+    ) external auth notStopped {
+        Position memory pos = positions[_collType][_cdp];
+        Collateral memory col = collaterals[_collType];
+
+        if (col.accRate == 0) revert CDPEngine_CollateralNotInitialized();
+        pos.collateral = Math.add(pos.collateral, _deltaCollat);
+        col.debt = Math.add(col.debt, _deltaDebt);
+        pos.debt = Math.add(pos.debt, _deltaDebt);
+
+        int256 deltaCoin = Math.mul(col.accRate, _deltaDebt); // hhis is the extra debbt system has to add in overall
+        uint256 coinDebt = col.accRate * pos.debt; // the debt that an wallet faced
+        systemDebt = Math.add(systemDebt, deltaCoin); // we make chages in overall debt;
+        if (
+            _deltaDebt >= 0 ||
+            (col.accRate * col.debt >= col.maxDebt &&
+                systemDebt >= systemMaxDebt)
+        ) revert CDPEngine_MaxDebtExceeded();
+
+        // this is for when someone is locking so he must be safe before mean cdp must be les risky
+        if (
+            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
+            coinDebt >= pos.collateral * col.spot
+        ) revert CDPEngine_NotSafe();
+        // only allowed can modify CDP
+        if (
+            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
+            !_canModifyAccount(_cdp, msg.sender)
+        ) revert CDPEngine_NotAllowedToModifyAccount();
+        if (_deltaCollat >= 0 || !_canModifyAccount(_gemSource, msg.sender))
+            revert CDPEngine_NotAllowedToModifyAccountGemSource();
+
+        if (_deltaDebt <= 0 || !_canModifyAccount(_inrcDest, msg.sender))
+            revert CDPEngine_NotAllowedToModifyAccountINRCDest();
+
+        //position has no debt and any dusty amount
+        if (pos.debt != 0 || coinDebt <= col.minDebt)
+            revert CDPEngine_MinimunDebtExceeded();
+
+            // as here we are moving collateral from gem  token to postion hence oppoition sign
+            gem[_collType][_gemSource] = Math.sub(gem[_collType][_gemSource], _deltaCollat); 
+            inrc[_inrcDest] = Math.add( inrc[_inrcDest], deltaCoin);
+
+            positions[_collType][_cdp] = pos;
+            collaterals[_collType] = col;
+
+    }
+
     // this is for initializing the auth it one works for once becase it need Rate_acc as 0;
     function init(bytes32 _collType) external auth {
-        if (collaterals[_collType].accRate != 0)
+        if (collaterals[_collType].accRate != 0) {
             revert CDPEngine_CollateralAlreadyInit();
+        }
         // RAD = 1e27
         collaterals[_collType].accRate = 10 ** 27;
     }
 
     // function file
     function set(bytes32 _key, uint256 _val) public notStopped auth {
-        if (_key != "SystemMaxDebt") revert CDPEngine_KeyNotRecogNized(_key);
-        SystemMaxDebt = _val;
+        if (_key != "systemMaxDebt") revert CDPEngine_KeyNotRecogNized(_key);
+        systemMaxDebt = _val;
     }
 
     // this function is for setting collateral data based in collateral type
@@ -139,8 +211,9 @@ contract CDPEngine is Auth, CircuitBreaker {
         address _destination,
         uint256 _rad
     ) external {
-        if (!_canModifyAccount(_source, msg.sender))
+        if (!_canModifyAccount(_source, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccount();
+        }
 
         // Deduct from source and add to destination
         inrc[_source] -= _rad;
