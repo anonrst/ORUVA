@@ -81,7 +81,8 @@ contract CDPEngine is Auth, CircuitBreaker {
     // creating coin (inrc) for user w aka dest
     // dink is basically the change in  collateral like increse and decrease
     // dark is chanage is amount of DEbt;
-    function frob(
+    // frob
+    function modifyCdp(
         bytes32 _collType,
         address _cdp,
         address _gemSource,
