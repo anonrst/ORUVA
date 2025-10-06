@@ -1,0 +1,38 @@
+[
+  {
+    "type": "function",
+    "name": "join",
+    "inputs": [
+      {"name": "_user", "type": "address"},
+      {"name": "wad", "type": "uint256"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "exit",
+    "inputs": [
+      {"name": "_user", "type": "address"},
+      {"name": "wad", "type": "uint256"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "Joined",
+    "inputs": [
+      {"name": "user", "type": "address", "indexed": true},
+      {"name": "wad", "type": "uint256", "indexed": false}
+    ]
+  },
+  {
+    "type": "event",
+    "name": "Exits",
+    "inputs": [
+      {"name": "user", "type": "address", "indexed": true},
+      {"name": "wad", "type": "uint256", "indexed": false}
+    ]
+  }
+]

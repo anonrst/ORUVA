@@ -12,3 +12,5 @@ docs/
 
 # Dotenv file
 .env
+
+/frontend/node_modules

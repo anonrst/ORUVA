@@ -1,0 +1,58 @@
+[
+  {
+    "type": "function",
+    "name": "modifyCollateralBalance",
+    "inputs": [
+      {"name": "_collateralType", "type": "bytes32"},
+      {"name": "_user", "type": "address"},
+      {"name": "_wad", "type": "int256"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferFrom",
+    "inputs": [
+      {"name": "from", "type": "address"},
+      {"name": "to", "type": "address"},
+      {"name": "wad", "type": "uint256"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "gem",
+    "inputs": [
+      {"name": "", "type": "bytes32"},
+      {"name": "", "type": "address"}
+    ],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "dai",
+    "inputs": [{"name": "", "type": "address"}],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCollateralBalance",
+    "inputs": [
+      {"name": "collateralType", "type": "bytes32"},
+      {"name": "user", "type": "address"}
+    ],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDaiBalance",
+    "inputs": [{"name": "user", "type": "address"}],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view"
+  }
+]
