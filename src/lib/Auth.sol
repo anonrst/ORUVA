@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
- 
+
 // this contract is for authentication this will authorize the other account for access the authorization process
 
 contract Auth {
     error Auth_NOTAUTHORIZED(address user);
+
     event GRANT_AUTHORIZED(address user);
     event DENIED_AUTHORIZATION(address user);
+
     mapping(address => bool) public authorized;
 
     constructor() {
@@ -15,8 +17,9 @@ contract Auth {
     }
 
     modifier auth() {
-        if (authorized[msg.sender] != true)
+        if (authorized[msg.sender] != true) {
             revert Auth_NOTAUTHORIZED(msg.sender);
+        }
         _;
     }
 

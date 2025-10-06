@@ -14,3 +14,4 @@ docs/
 .env
 
 /frontend/node_modules
+.vscode/*
