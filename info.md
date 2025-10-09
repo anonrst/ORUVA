@@ -48,3 +48,4 @@ and in this info the MKR is the governance token of makerDAO which is being used
 
 surpless mean overfill like having more then needded
 and debt mean being in loss
+Unbacked DAI basically means DAI that was minted without actual collateral

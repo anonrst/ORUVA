@@ -38,7 +38,10 @@ interface ICDPEngine {
     function collaterals(bytes32 _colType) external view returns (Collateral memory);
 
     // move: Transfer internal INRc (stablecoin) balances between accounts
-    function transferInrc(address src, address dst, uint256 amount) external;
+    function transferInrc(address _source, address _destination, uint256 _rad) external;
+
+    //suck = the protocol creates new DAI from nothing, gives it to an address, and counts it as debt the system owes aka unbacked dao
+    function mint(address _debtDest, address _coinDest, uint256 _rad) external;
 
     // Allows a specific account to modify others' CDPs (used for delegation)
     function allowAccountModification(address user) external;
@@ -54,4 +57,7 @@ interface ICDPEngine {
 
     // Revokes permission to modify another account’s CDP
     function denyAccountModification(address user) external;
+
+    // this is for reducig the unbacked debt from user ans system
+    function burn(uint256 _rad) external;
 }

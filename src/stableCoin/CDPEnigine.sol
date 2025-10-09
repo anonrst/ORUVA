@@ -64,8 +64,15 @@ contract CDPEngine is Auth, CircuitBreaker {
 
     // Mapping: owner => user => permission to modify balances
     mapping(address => mapping(address => bool)) public can;
+
+    // sin
+    // the unbacked debt user has owed
+    mapping(address => uint256) public unbackedDebt;
+    //vice
+    uint256 public sysUnBackedDebt;
     // line  refers to overall system maxdevt
     // total inrc Ceinling mean the last stoplostt;
+
     uint256 public systemMaxDebt;
     //total cuurernt DEbT
     uint256 public systemDebt;
@@ -217,5 +224,46 @@ contract CDPEngine is Auth, CircuitBreaker {
         inrc[conDest] = Math.add(inrc[conDest], deltaCoin);
         // and we also hae to chage the system debt ;
         systemDebt = Math.add(systemDebt, deltaCoin);
+    }
+
+    //suck
+    // this mint function the protocol creates new DAI from nothing, gives it to an address, and counts it as debt the system owes aka unbacked dao
+    function mint(address _debtDest, address _coinDest, uint256 _rad) external auth {
+        unbackedDebt[_debtDest] += _rad;
+        inrc[_coinDest] += _rad;
+        sysUnBackedDebt += _rad;
+        systemDebt += _rad;
+    }
+
+    // heal = this decresase thu unbacked debt and it's callable by anyone bacause it's caller who's gonna pay for this unbacked debt
+    function burn(uint256 _rad) external {
+        unbackedDebt[msg.sender] -= _rad;
+        inrc[msg.sender] -= _rad;
+        sysUnBackedDebt -= _rad;
+        systemDebt -= _rad;
+    }
+    //grab
+    // i = collateralTyoe
+    // u = the user gonna face liquidate and loose coin
+    // v= the user called liquiate and get the u's collateral by paying his debt
+    // w = te sys gonna face unbacked debt
+    // dink the amount of collateral in change
+    // dart is the change in debt these 2 will be in negative sign
+    // this is callable by dog contract to liquidate
+
+    function grab(bytes32 _colType, address _victim, address _liquidator, int256 _collateral, int256 _deltaDebt)
+        external
+        auth
+    {
+        Position storage pos = positions[_colType][_victim];
+        Collateral storage col = collaterals[_colType];
+        pos.collateral = Math.add(pos.collateral, _collateral);
+        pos.debt = Math.add(pos.debt, _deltaDebt);
+        col.debt = Math.add(col.debt, _deltaDebt);
+
+        int256 deltaCoin = Math.mul(col.accRate, _deltaDebt);
+        gem[_colType][_victim] = Math.sub(gem[_colType][_victim], _collateral);
+        unbackedDebt[_liquidator] = Math.sub(unbackedDebt[_liquidator], deltaCoin);
+        sysUnBackedDebt = Math.sub(sysUnBackedDebt, _deltaDebt);
     }
 }
