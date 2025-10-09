@@ -17,8 +17,17 @@ library Math {
         // if _y is negative, subtract its absolute value from _x
         return _y >= 0 ? _x + uint256(_y) : _x - uint256(-_y);
     }
-    function sub(uint x, int y) internal pure returns (uint z) {
-        z = x - uint(y);
+
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x * RAY / y;
+    }
+
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x * y / RAY;
+    }
+
+    function sub(uint256 x, int256 y) internal pure returns (uint256 z) {
+        z = x - uint256(y);
         require(y <= 0 || z <= x);
         require(y >= 0 || z >= x);
     }
@@ -31,9 +40,9 @@ library Math {
         z = x >= y ? x : y;
     }
 
-    function mul(uint x, int y) internal pure returns (int z) {
-        z = int(x) * y;
-        require(int(x) >= 0);
-        require(y == 0 || z / y == int(x));
+    function mul(uint256 x, int256 y) internal pure returns (int256 z) {
+        z = int256(x) * y;
+        require(int256(x) >= 0);
+        require(y == 0 || z / y == int256(x));
     }
 }

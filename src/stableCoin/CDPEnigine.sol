@@ -101,39 +101,35 @@ contract CDPEngine is Auth, CircuitBreaker {
         int256 deltaCoin = Math.mul(col.accRate, _deltaDebt); // hhis is the extra debbt system has to add in overall
         uint256 coinDebt = col.accRate * pos.debt; // the debt that an wallet faced
         systemDebt = Math.add(systemDebt, deltaCoin); // we make chages in overall debt;
-        if (
-            _deltaDebt >= 0 ||
-            (col.accRate * col.debt >= col.maxDebt &&
-                systemDebt >= systemMaxDebt)
-        ) revert CDPEngine_MaxDebtExceeded();
+        if (_deltaDebt >= 0 || (col.accRate * col.debt >= col.maxDebt && systemDebt >= systemMaxDebt)) {
+            revert CDPEngine_MaxDebtExceeded();
+        }
 
         // this is for when someone is locking so he must be safe before mean cdp must be les risky
-        if (
-            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
-            coinDebt >= pos.collateral * col.spot
-        ) revert CDPEngine_NotSafe();
+        if ((_deltaDebt >= 0 && _deltaCollat <= 0) || coinDebt >= pos.collateral * col.spot) revert CDPEngine_NotSafe();
         // only allowed can modify CDP
-        if (
-            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
-            !_canModifyAccount(_cdp, msg.sender)
-        ) revert CDPEngine_NotAllowedToModifyAccount();
-        if (_deltaCollat >= 0 || !_canModifyAccount(_gemSource, msg.sender))
+        if ((_deltaDebt >= 0 && _deltaCollat <= 0) || !_canModifyAccount(_cdp, msg.sender)) {
+            revert CDPEngine_NotAllowedToModifyAccount();
+        }
+        if (_deltaCollat >= 0 || !_canModifyAccount(_gemSource, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccountGemSource();
+        }
 
-        if (_deltaDebt <= 0 || !_canModifyAccount(_inrcDest, msg.sender))
+        if (_deltaDebt <= 0 || !_canModifyAccount(_inrcDest, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccountINRCDest();
+        }
 
         //position has no debt and any dusty amount
-        if (pos.debt != 0 || coinDebt <= col.minDebt)
+        if (pos.debt != 0 || coinDebt <= col.minDebt) {
             revert CDPEngine_MinimunDebtExceeded();
+        }
 
-            // as here we are moving collateral from gem  token to postion hence oppoition sign
-            gem[_collType][_gemSource] = Math.sub(gem[_collType][_gemSource], _deltaCollat); 
-            inrc[_inrcDest] = Math.add( inrc[_inrcDest], deltaCoin);
+        // as here we are moving collateral from gem  token to postion hence oppoition sign
+        gem[_collType][_gemSource] = Math.sub(gem[_collType][_gemSource], _deltaCollat);
+        inrc[_inrcDest] = Math.add(inrc[_inrcDest], deltaCoin);
 
-            positions[_collType][_cdp] = pos;
-            collaterals[_collType] = col;
-
+        positions[_collType][_cdp] = pos;
+        collaterals[_collType] = col;
     }
 
     // this is for initializing the auth it one works for once becase it need Rate_acc as 0;
@@ -146,17 +142,13 @@ contract CDPEngine is Auth, CircuitBreaker {
     }
 
     // function file
-    function set(bytes32 _key, uint256 _val) public notStopped auth {
+    function set(bytes32 _key, uint256 _val) external notStopped auth {
         if (_key != "systemMaxDebt") revert CDPEngine_KeyNotRecogNized(_key);
         systemMaxDebt = _val;
     }
 
     // this function is for setting collateral data based in collateral type
-    function set(
-        bytes32 _collType,
-        bytes32 _key,
-        uint256 _val
-    ) external auth notStopped {
+    function set(bytes32 _collType, bytes32 _key, uint256 _val) external auth notStopped {
         if (_key == "spot") collaterals[_collType].spot = _val;
         else if (_key == "maxDebt") collaterals[_collType].maxDebt = _val;
         else if (_key == "minDebt") collaterals[_collType].minDebt = _val;
@@ -168,15 +160,8 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _user User's address
     /// @param _wad Amount to adjust (int: +add, -remove)
     //slip
-    function modifyCollateralBalance(
-        bytes32 _collateralType,
-        address _user,
-        int256 _wad
-    ) external auth {
-        gem[_collateralType][_user] = Math.add(
-            gem[_collateralType][_user],
-            _wad
-        );
+    function modifyCollateralBalance(bytes32 _collateralType, address _user, int256 _wad) external auth {
+        gem[_collateralType][_user] = Math.add(gem[_collateralType][_user], _wad);
     }
 
     /// @notice Allow another account to modify your balances
@@ -195,10 +180,7 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _owner Owner of the balances
     /// @param _user User trying to modify
     /// @return true if allowed
-    function _canModifyAccount(
-        address _owner,
-        address _user
-    ) internal view returns (bool) {
+    function _canModifyAccount(address _owner, address _user) internal view returns (bool) {
         return _owner == _user || can[_owner][_user];
     }
 
@@ -207,11 +189,7 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _destination Receiver
     /// @param _rad Amount to transfer
     //move
-    function transferInrc(
-        address _source,
-        address _destination,
-        uint256 _rad
-    ) external {
+    function transferInrc(address _source, address _destination, uint256 _rad) external {
         if (!_canModifyAccount(_source, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccount();
         }
@@ -219,5 +197,23 @@ contract CDPEngine is Auth, CircuitBreaker {
         // Deduct from source and add to destination
         inrc[_source] -= _rad;
         inrc[_destination] += _rad;
+    }
+    // contract JUG is responsible for calling this fold function
+    // this is for handling the change in rate of collaterals
+
+    function fold(bytes32 _colType, address conDest, int256 deltaRate) external auth notStopped {
+        // this is the collateral token whose rate is changing
+        Collateral memory col = collaterals[_colType];
+        // it' snew rate wil be sum of it's old pluse new rate
+        col.accRate = Math.add(col.accRate, deltaRate);
+        //  now this rate make an change it inrc token AMount so we have to add this amoount in system debt the amout of inrc tokis changed so
+        // so as we know for finding old  debt = colRate * colDebt
+        // but for new debt of collatral we have to sum of new and old = (col.accRate + deltaRate ) * col.Debt;
+        // as this is total we have to find difference between new and old by subtracting old with new
+        //( (colRate + DeltaRate) * colDebt)  - (colRate * colDebt ) and if we simplify this then it'l be deltaRAte * colDebt
+        int256 deltaCoin = Math.mul(col.debt, deltaRate);
+        inrc[conDest] = Math.add(inrc[conDest], deltaCoin);
+        // and we also hae to chage the system debt ;
+        systemDebt = Math.add(systemDebt, deltaCoin);
     }
 }

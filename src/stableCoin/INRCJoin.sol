@@ -4,10 +4,7 @@ pragma solidity ^0.8.22;
 import {Auth} from "../lib/Auth.sol";
 import {CircuitBreaker} from "../lib/CircuitBreaker.sol";
 import {RAD} from "../lib/Math.sol";
-
-interface ICDPEngine {
-    function transferFrom(address from, address to, uint256 wad) external;
-}
+import {ICDPEngine} from "../interfaces/ICDPEngine.sol";
 
 interface IINRC {
     function mint(address to, uint256 amount) external;
@@ -40,13 +37,13 @@ contract INRCJoin is CircuitBreaker, Auth {
         //         Why 1e45? Because Vat stores balances as rad — combining token amount (wad, 1e18) with high-precision rates (ray, 1e27).
 
         // This allows MakerDAO to apply interest rates accurately on huge numbers without rounding errors
-        cdpEngine.transferFrom(address(this), _user, RAD * wad);
+        cdpEngine.transferInrc(address(this), _user, RAD * wad);
         inrcToken.burn(_user, wad);
         emit Joined(_user, wad);
     }
 
     function exit(address _user, uint256 wad) external notStopped {
-        cdpEngine.transferFrom(_user, address(this), RAD * wad);
+        cdpEngine.transferInrc(_user, address(this), RAD * wad);
         inrcToken.mint(_user, wad);
         emit Exits(_user, wad);
     }
