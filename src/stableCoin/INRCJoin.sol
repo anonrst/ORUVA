@@ -34,8 +34,7 @@ contract INRCJoin is CircuitBreaker, Auth {
 
     // here its burning the token that user brought with himself and minting actual our inrc stablecoin in his vat wallet mean as we know that it stores tokens in 1e45 so it storing internally  RAD * wad and burning ans opposite  when user exits
     function join(address _user, uint256 wad) external {
-        //         Why 1e45? Because Vat stores balances as rad — combining token amount (wad, 1e18) with high-precision rates (ray, 1e27).
-
+        //Why 1e45? Because Vat stores balances as rad — combining token amount (wad, 1e18) with high-precision rates (ray, 1e27).
         // This allows MakerDAO to apply interest rates accurately on huge numbers without rounding errors
         cdpEngine.transferInrc(address(this), _user, RAD * wad);
         inrcToken.burn(_user, wad);

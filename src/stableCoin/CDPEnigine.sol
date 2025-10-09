@@ -22,25 +22,26 @@ contract CDPEngine is Auth, CircuitBreaker {
     // ilk
 
     struct Collateral {
-        // the art is the debt the overall system has befoer componding to rate e.g. 1e18
-        // we  calcualte art with formula d0 / r0 + d1/ r1 on go on with accumulation so in result as we know the formula for finding debt is d = amount * rate so here as amount is our art so thier art = d / rate
-        //art
+        // art = system’s “raw” debt before applying the accumulated rate
+        // formula: art = d / rate
+        // Think of it as base debt the veri first value
         uint256 debt;
-        //rate
-        // htis is the accumulation of every rate
+        // accRate = accumulated rate over time for this collateral
+        // It compounds the stability fee automatically
         uint256 accRate;
-        // let assume safemargin is 0.2 ( 1 eth = $2000)
-        // formula for spot =  price * ( 1 - safeMargit)
-        // formula for spot = collateralPrice * (1 - 0.2 )= 2000 -400 = $1600
-        // so the maximum dai amount  user can borrow  is  = spot * collateralAmount = 2000 * ( 1- 0.2) * 1 = $1600 mean it can borrow 1600 amount of dai
-        // at time t price = 2000 = 1800 thenmac Borrow = 1800 * (1 - 0.2) * 1; 1440 amount of dai it can borrow
-        // so now as it's low from safety margin that was only for 1600 this mean now it'll liquidate and another guy will for this user dai and get his available eth still the dai will be in loo but the twiest its the liqudator got the 1 eth just by clear the whole debt by paying 1600 which was max borrow amount
+        // spot = adjusted collateral price used for max borrow calculations
+        // Example: eth price = $2000, safeMargin = 0.2
+        // spot = price * (1 - safeMargin) = 2000 * 0.8 = 1600
+        // max borrow = spot * collateralAmount
+        // If price drops to $1800 → max borrow = 1800 * 0.8 * 1 ETH = 1440 DAI
+        // If below previous max borrow → liquidation can happen
+        // it is in RAY daya typr
         uint256 spot;
-        // line
-        // the maxDebt we solved it
+        // maxDebt = the max DAI a user can borrow for this collateral
+        // calculated using spot and collateral amount
         uint256 maxDebt;
-        // dust
-        // we need it because if liquidation ocst more than the amount of dai no one will liquididate so
+        // minDebt = the minimum debt allowed (dust)
+        // prevents liquidation from being unprofitable for liquidators
         uint256 minDebt;
     }
 
@@ -198,12 +199,13 @@ contract CDPEngine is Auth, CircuitBreaker {
         inrc[_source] -= _rad;
         inrc[_destination] += _rad;
     }
+
     // contract JUG is responsible for calling this fold function
     // this is for handling the change in rate of collaterals
 
     function fold(bytes32 _colType, address conDest, int256 deltaRate) external auth notStopped {
         // this is the collateral token whose rate is changing
-        Collateral memory col = collaterals[_colType];
+        Collateral storage col = collaterals[_colType];
         // it' snew rate wil be sum of it's old pluse new rate
         col.accRate = Math.add(col.accRate, deltaRate);
         //  now this rate make an change it inrc token AMount so we have to add this amoount in system debt the amout of inrc tokis changed so
