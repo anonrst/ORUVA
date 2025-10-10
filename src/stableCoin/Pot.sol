@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {CircuitBreaker} from "../lib/CircuitBreaker.sol";
 import {Auth} from "../lib/Auth.sol";
-import {Math, WAD, RAD, RAY} from "../lib/Math.sol";
+import {Math, RAY} from "../lib/Math.sol";
 import {ICDPEngine} from "../interfaces/ICDPEngine.sol";
 
 contract Pot is Auth, CircuitBreaker {
@@ -58,14 +58,14 @@ contract Pot is Auth, CircuitBreaker {
     function collectStabilityFee() external returns (uint256) {
         if (block.timestamp < updatedAt) revert Pot_InvalidTimeStamp();
         uint256 acc = Math.rmul(Math.rpow(savingRate, updatedAt - block.timestamp, RAY), rateAcc);
-        uint256 delta_acc = rateAcc - acc;
+        uint256 deltaAcc = rateAcc - acc;
         rateAcc = acc;
         updatedAt = block.timestamp;
         // here the totalPie * delta rate is the difference of token from old to new
         // old Token = totalPie * old rate
         // newly token = totalPir *  new rate
         // difference token  = total * (old - new) = total * delta
-        cdpEngine.mint(address(dsEngine), address(this), totalPie * delta_acc);
+        cdpEngine.mint(address(dsEngine), address(this), totalPie * deltaAcc);
         return acc;
     }
 

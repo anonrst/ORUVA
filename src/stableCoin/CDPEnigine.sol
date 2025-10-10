@@ -251,11 +251,11 @@ contract CDPEngine is Auth, CircuitBreaker {
     // dart is the change in debt these 2 will be in negative sign
     // this is callable by dog contract to liquidate
 
-    function grab(bytes32 _colType, address _victim, address _liquidator, int256 _collateral, int256 _deltaDebt)
+    function grab(bytes32 _colType,address _cdp, address _victim, address _liquidator, int256 _collateral, int256 _deltaDebt)
         external
         auth
     {
-        Position storage pos = positions[_colType][_victim];
+        Position storage pos = positions[_colType][_cdp];
         Collateral storage col = collaterals[_colType];
         pos.collateral = Math.add(pos.collateral, _collateral);
         pos.debt = Math.add(pos.debt, _deltaDebt);
@@ -264,6 +264,6 @@ contract CDPEngine is Auth, CircuitBreaker {
         int256 deltaCoin = Math.mul(col.accRate, _deltaDebt);
         gem[_colType][_victim] = Math.sub(gem[_colType][_victim], _collateral);
         unbackedDebt[_liquidator] = Math.sub(unbackedDebt[_liquidator], deltaCoin);
-        sysUnBackedDebt = Math.sub(sysUnBackedDebt, _deltaDebt);
+        sysUnBackedDebt = Math.sub(sysUnBackedDebt, deltaCoin);
     }
 }

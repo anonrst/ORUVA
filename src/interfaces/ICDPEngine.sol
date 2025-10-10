@@ -33,12 +33,36 @@ interface ICDPEngine {
     function init(bytes32 collateralType) external;
 
     // slip: Directly change internal collateral balance for a type
-    function modifyCollateralBalance(bytes32 collateralType, address user, int256 delta) external;
+    function modifyCollateralBalance(
+        bytes32 collateralType,
+        address user,
+        int256 delta
+    ) external;
 
-    function collaterals(bytes32 _colType) external view returns (Collateral memory);
+    function collaterals(
+        bytes32 _colType
+    ) external view returns (Collateral memory);
+
+    function grab(
+        bytes32 _colType,
+        address _cdp,
+        address _victim,
+        address _liquidator,
+        int256 _collateral,
+        int256 _deltaDebt
+    ) external;
+
+    function positions(
+        bytes32 colType,
+        address account
+    ) external view returns (Position memory);
 
     // move: Transfer internal INRc (stablecoin) balances between accounts
-    function transferInrc(address _source, address _destination, uint256 _rad) external;
+    function transferInrc(
+        address _source,
+        address _destination,
+        uint256 _rad
+    ) external;
 
     //suck = the protocol creates new DAI from nothing, gives it to an address, and counts it as debt the system owes aka unbacked dao
     function mint(address _debtDest, address _coinDest, uint256 _rad) external;
@@ -53,7 +77,11 @@ interface ICDPEngine {
     function set(bytes32 _key, uint256 _data) external;
 
     // Updates the collateral’s stability fee rate (accumulated over time)
-    function fold(bytes32 collateralType, address user, int256 rateDelta) external;
+    function fold(
+        bytes32 collateralType,
+        address user,
+        int256 rateDelta
+    ) external;
 
     // Revokes permission to modify another account’s CDP
     function denyAccountModification(address user) external;
