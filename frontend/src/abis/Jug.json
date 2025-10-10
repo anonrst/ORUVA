@@ -1,0 +1,78 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {"name": "_cdpEngine", "type": "address"}
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "init",
+    "inputs": [
+      {"name": "_colType", "type": "bytes32"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "drip",
+    "inputs": [
+      {"name": "_colType", "type": "bytes32"}
+    ],
+    "outputs": [{"name": "rate", "type": "uint256"}],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "collaterals",
+    "inputs": [{"name": "", "type": "bytes32"}],
+    "outputs": [
+      {"name": "fee", "type": "uint256"},
+      {"name": "updatedAt", "type": "uint256"}
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "cdpEngine",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "address"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "dsEngine",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "address"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "baseFee",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "error",
+    "name": "Jug_AlreadyInit",
+    "inputs": [{"name": "collType", "type": "bytes32"}]
+  },
+  {
+    "type": "error",
+    "name": "Jug_ColNotUpdated",
+    "inputs": [{"name": "collType", "type": "bytes32"}]
+  },
+  {
+    "type": "error",
+    "name": "Jug_UnrecognizedParamKey",
+    "inputs": [{"name": "key", "type": "bytes32"}]
+  },
+  {
+    "type": "error",
+    "name": "Jug_InvalidCurrntTime",
+    "inputs": []
+  }
+]

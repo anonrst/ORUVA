@@ -38,40 +38,45 @@ export function CollateralManager() {
 
   if (!isConnected) {
     return (
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-        <h2 className="text-xl font-semibold mb-4 text-white">Collateral Management</h2>
-        <p className="text-gray-400">Connect your wallet to manage collateral</p>
+      <div className="bg-surface-200/80 backdrop-blur-xl rounded-4xl border border-surface-400/50 p-8 shadow-material-lg animate-fade-in">
+        <div className="flex items-center mb-6">
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center mr-6 shadow-material-md">
+            <span className="text-white text-2xl">🔒</span>
+          </div>
+          <h2 className="text-2xl font-bold text-surface-900">Collateral Management</h2>
+        </div>
+        <p className="text-surface-700 font-medium">Connect your wallet to manage collateral</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800/60 backdrop-blur-xl rounded-3xl border border-gray-700/50 p-8 shadow-2xl">
+    <div className="bg-surface-200/80 backdrop-blur-xl rounded-4xl border border-surface-400/50 p-8 shadow-material-lg animate-fade-in">
       <div className="flex items-center mb-8">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4">
-          <span className="text-white text-xl">🔒</span>
+        <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center mr-6 shadow-material-md">
+          <span className="text-white text-2xl">🔒</span>
         </div>
-        <h2 className="text-2xl font-bold text-white">Collateral Management</h2>
+        <h2 className="text-2xl font-bold text-surface-900">Collateral Management</h2>
       </div>
       
       {/* Tab Navigation */}
-      <div className="flex bg-gray-700/50 rounded-2xl p-1 mb-8">
+      <div className="flex bg-surface-300/50 rounded-3xl p-2 mb-8 border-2 border-surface-400/50">
         <button
           onClick={() => setActiveTab('deposit')}
-          className={`flex-1 px-6 py-3 font-semibold text-sm rounded-xl transition-all duration-200 ${
+          className={`flex-1 px-8 py-4 font-bold text-lg rounded-2xl transition-all duration-300 ${
             activeTab === 'deposit'
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-              : 'text-gray-400 hover:text-white hover:bg-gray-600/50'
+              ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-material-md transform scale-105'
+              : 'text-surface-700 hover:text-surface-900 hover:bg-surface-300/30'
           }`}
         >
           💰 Deposit
         </button>
         <button
           onClick={() => setActiveTab('withdraw')}
-          className={`flex-1 px-6 py-3 font-semibold text-sm rounded-xl transition-all duration-200 ${
+          className={`flex-1 px-8 py-4 font-bold text-lg rounded-2xl transition-all duration-300 ${
             activeTab === 'withdraw'
-              ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-              : 'text-gray-400 hover:text-white hover:bg-gray-600/50'
+              ? 'bg-gradient-to-r from-error-500 to-error-600 text-white shadow-material-md transform scale-105'
+              : 'text-surface-700 hover:text-surface-900 hover:bg-surface-300/30'
           }`}
         >
           💸 Withdraw
@@ -79,32 +84,32 @@ export function CollateralManager() {
       </div>
 
       {/* Balances Display */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-2xl p-6 border border-gray-600/50 backdrop-blur-sm">
-          <div className="flex items-center mb-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3">
-              <span className="text-white text-sm">💳</span>
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-surface-300 to-surface-400 rounded-3xl p-6 border-2 border-success-400/50">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mr-4 shadow-material-md">
+              <span className="text-white text-lg">💳</span>
             </div>
-            <p className="text-sm font-medium text-gray-400">Wallet Balance</p>
+            <p className="text-sm font-bold text-success-600 uppercase tracking-wide">Wallet Balance</p>
           </div>
-          <p className="text-xl font-bold text-white">{parseFloat(collateralBalance).toFixed(4)} ETH</p>
+          <p className="text-2xl font-bold text-surface-900">{parseFloat(collateralBalance).toFixed(4)} ETH</p>
         </div>
-        <div className="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-2xl p-6 border border-gray-600/50 backdrop-blur-sm">
-          <div className="flex items-center mb-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3">
-              <span className="text-white text-sm">🏛️</span>
+        <div className="bg-gradient-to-br from-surface-300 to-surface-400 rounded-3xl p-6 border-2 border-primary-400/50">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mr-4 shadow-material-md">
+              <span className="text-white text-lg">🏛️</span>
             </div>
-            <p className="text-sm font-medium text-gray-400">In Vault</p>
+            <p className="text-sm font-bold text-primary-600 uppercase tracking-wide">In Vault</p>
           </div>
-          <p className="text-xl font-bold text-white">{parseFloat(collateralInVault).toFixed(4)} ETH</p>
+          <p className="text-2xl font-bold text-surface-900">{parseFloat(collateralInVault).toFixed(4)} ETH</p>
         </div>
       </div>
 
       {/* Deposit Tab */}
       {activeTab === 'deposit' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-3">
+            <label className="block text-sm font-bold text-surface-700 mb-4 uppercase tracking-wide">
               Amount to Deposit (ETH)
             </label>
             <div className="relative">
@@ -113,14 +118,14 @@ export function CollateralManager() {
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
                 placeholder="0.0"
-                className="w-full px-6 py-4 border border-gray-600/50 bg-gray-700/50 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-lg font-semibold"
+                className="w-full px-6 py-4 border-2 border-surface-400/50 bg-surface-300/50 text-surface-900 rounded-3xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xl font-bold transition-all duration-200"
                 step="0.01"
                 min="0"
                 max={collateralBalance}
               />
               <button
                 onClick={() => setDepositAmount(collateralBalance)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-4 py-2 rounded-2xl text-sm font-bold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-material-md"
               >
                 Max
               </button>
@@ -130,11 +135,11 @@ export function CollateralManager() {
           <button
             onClick={handleDeposit}
             disabled={isLoading || !depositAmount || parseFloat(depositAmount) <= 0}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+            className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-5 px-8 rounded-3xl font-bold text-xl hover:from-primary-600 hover:to-primary-700 disabled:from-surface-400 disabled:to-surface-500 disabled:cursor-not-allowed transition-all duration-200 shadow-material-lg hover:shadow-material-xl transform hover:scale-105 disabled:transform-none"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent mr-3"></div>
                 Processing...
               </div>
             ) : (
@@ -146,9 +151,9 @@ export function CollateralManager() {
 
       {/* Withdraw Tab */}
       {activeTab === 'withdraw' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-3">
+            <label className="block text-sm font-bold text-surface-700 mb-4 uppercase tracking-wide">
               Amount to Withdraw (ETH)
             </label>
             <div className="relative">
@@ -157,26 +162,26 @@ export function CollateralManager() {
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 placeholder="0.0"
-                className="w-full px-6 py-4 border border-gray-600/50 bg-gray-700/50 text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent backdrop-blur-sm text-lg font-semibold"
+                className="w-full px-6 py-4 border-2 border-surface-400/50 bg-surface-300/50 text-surface-900 rounded-3xl focus:outline-none focus:ring-2 focus:ring-error-500 focus:border-error-500 text-xl font-bold transition-all duration-200"
                 step="0.01"
                 min="0"
                 max={collateralInVault}
               />
               <button
                 onClick={() => setWithdrawAmount(collateralInVault)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-red-600 text-white px-3 py-1 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-error-500 to-error-600 text-white px-4 py-2 rounded-2xl text-sm font-bold hover:from-error-600 hover:to-error-700 transition-all duration-200 shadow-material-md"
               >
                 Max
               </button>
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-600/50 rounded-2xl p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-r from-surface-300 to-surface-400 border-2 border-warning-400/50 rounded-3xl p-6">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
-                <span className="text-white text-sm">⚠️</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-warning-500 to-warning-600 rounded-2xl flex items-center justify-center mr-4 shadow-material-md">
+                <span className="text-white text-lg">⚠️</span>
               </div>
-              <p className="text-sm text-yellow-200 font-medium">
+              <p className="text-warning-600 font-bold">
                 Ensure you maintain sufficient collateralization ratio after withdrawal
               </p>
             </div>
@@ -185,11 +190,11 @@ export function CollateralManager() {
           <button
             onClick={handleWithdraw}
             disabled={isLoading || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
-            className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+            className="w-full bg-gradient-to-r from-error-500 to-error-600 text-white py-5 px-8 rounded-3xl font-bold text-xl hover:from-error-600 hover:to-error-700 disabled:from-surface-400 disabled:to-surface-500 disabled:cursor-not-allowed transition-all duration-200 shadow-material-lg hover:shadow-material-xl transform hover:scale-105 disabled:transform-none"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent mr-3"></div>
                 Processing...
               </div>
             ) : (

@@ -1,6 +1,20 @@
 [
   {
     "type": "function",
+    "name": "modifyCdp",
+    "inputs": [
+      {"name": "_collType", "type": "bytes32"},
+      {"name": "_cdp", "type": "address"},
+      {"name": "_gemSource", "type": "address"},
+      {"name": "_inrcDest", "type": "address"},
+      {"name": "_deltaCollat", "type": "int256"},
+      {"name": "_deltaDebt", "type": "int256"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "modifyCollateralBalance",
     "inputs": [
       {"name": "_collateralType", "type": "bytes32"},
@@ -12,12 +26,26 @@
   },
   {
     "type": "function",
-    "name": "transferFrom",
+    "name": "transferInrc",
     "inputs": [
-      {"name": "from", "type": "address"},
-      {"name": "to", "type": "address"},
-      {"name": "wad", "type": "uint256"}
+      {"name": "_source", "type": "address"},
+      {"name": "_destination", "type": "address"},
+      {"name": "_rad", "type": "uint256"}
     ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "allowAccountModification",
+    "inputs": [{"name": "_usr", "type": "address"}],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "denyAccountModification",
+    "inputs": [{"name": "_usr", "type": "address"}],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -33,25 +61,58 @@
   },
   {
     "type": "function",
-    "name": "dai",
+    "name": "inrc",
     "inputs": [{"name": "", "type": "address"}],
     "outputs": [{"name": "", "type": "uint256"}],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "getCollateralBalance",
+    "name": "positions",
     "inputs": [
-      {"name": "collateralType", "type": "bytes32"},
-      {"name": "user", "type": "address"}
+      {"name": "", "type": "bytes32"},
+      {"name": "", "type": "address"}
     ],
+    "outputs": [
+      {"name": "collateral", "type": "uint256"},
+      {"name": "debt", "type": "uint256"}
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "collaterals",
+    "inputs": [{"name": "", "type": "bytes32"}],
+    "outputs": [
+      {"name": "debt", "type": "uint256"},
+      {"name": "accRate", "type": "uint256"},
+      {"name": "spot", "type": "uint256"},
+      {"name": "maxDebt", "type": "uint256"},
+      {"name": "minDebt", "type": "uint256"}
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "can",
+    "inputs": [
+      {"name": "", "type": "address"},
+      {"name": "", "type": "address"}
+    ],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "systemDebt",
+    "inputs": [],
     "outputs": [{"name": "", "type": "uint256"}],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "getDaiBalance",
-    "inputs": [{"name": "user", "type": "address"}],
+    "name": "systemMaxDebt",
+    "inputs": [],
     "outputs": [{"name": "", "type": "uint256"}],
     "stateMutability": "view"
   }

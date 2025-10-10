@@ -14,99 +14,106 @@ export function Dashboard() {
 
   if (!isConnected) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-400">
-          Connect your wallet to access the banking system
+      <div className="text-center py-16 animate-fade-in">
+        <div className="w-20 h-20 bg-gradient-to-br from-surface-200 to-surface-300 rounded-4xl flex items-center justify-center mx-auto mb-6">
+          <span className="text-primary-600 text-3xl">🔗</span>
+        </div>
+        <h2 className="text-2xl font-bold text-surface-900 mb-2">
+          Connect Your Wallet
         </h2>
+        <p className="text-surface-700">
+          Connect your wallet to access the banking system and manage your positions
+        </p>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-        <p className="mt-4 text-gray-400">Loading your banking data...</p>
+      <div className="text-center py-16 animate-fade-in">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-surface-300 border-t-primary-600 mx-auto mb-6"></div>
+        <h2 className="text-xl font-semibold text-surface-900 mb-2">Loading Dashboard</h2>
+        <p className="text-surface-700">Fetching your banking data...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold text-white mb-3 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+    <div className="animate-fade-in">
+      <div className="mb-12">
+        <h1 className="text-4xl font-bold text-surface-900 mb-3">
           Banking Dashboard
         </h1>
-        <p className="text-gray-400 text-lg">Manage your collateral and stablecoin positions</p>
+        <p className="text-surface-700 text-lg">Manage your collateral and stablecoin positions</p>
       </div>
 
       {/* Account Info */}
-      <div className="bg-gray-800/60 backdrop-blur-xl rounded-3xl p-6 mb-8 border border-gray-700/50 shadow-2xl">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <span className="text-white text-lg">👤</span>
+      <div className="bg-surface-200/80 backdrop-blur-xl rounded-4xl p-8 mb-8 border border-surface-400/50 shadow-material-lg animate-slide-up">
+        <div className="flex items-center space-x-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center shadow-material-md">
+            <span className="text-white text-2xl">👤</span>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Connected Account</h3>
-            <p className="font-mono text-sm text-white bg-gray-700/50 px-3 py-1 rounded-xl">{address}</p>
+            <h3 className="text-sm font-semibold text-surface-700 mb-2 uppercase tracking-wide">Connected Account</h3>
+            <p className="font-mono text-lg text-surface-900 bg-surface-300/50 px-4 py-2 rounded-2xl border border-surface-400/50">{address}</p>
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard
           title="Collateral in Vault"
           value={`${parseFloat(collateralInVault).toFixed(4)} ETH`}
           subtitle="Locked as collateral"
-          color="blue"
+          color="primary"
         />
         <StatCard
           title="Borrowed Amount"
           value={`${parseFloat(daiDebt).toFixed(2)} BANK`}
           subtitle="Outstanding debt"
-          color="red"
+          color="error"
         />
         <StatCard
           title="Wallet Balance"
           value={`${parseFloat(collateralBalance).toFixed(4)} ETH`}
           subtitle="Available to deposit"
-          color="green"
+          color="success"
         />
         <StatCard
           title="Stablecoin Balance"
           value={`${parseFloat(stablecoinBalance).toFixed(2)} BANK`}
           subtitle="In your wallet"
-          color="purple"
+          color="warning"
         />
       </div>
 
       {/* Collateralization Ratio */}
-      <div className="bg-gray-800/60 backdrop-blur-xl rounded-3xl border border-gray-700/50 p-8 mb-8 shadow-2xl">
-        <div className="flex items-center mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4">
-            <span className="text-white text-lg">💚</span>
+      <div className="bg-surface-200/80 backdrop-blur-xl rounded-4xl border border-surface-400/50 p-8 shadow-material-lg animate-slide-up">
+        <div className="flex items-center mb-8">
+          <div className="w-14 h-14 bg-gradient-to-br from-success-500 to-success-600 rounded-3xl flex items-center justify-center mr-6 shadow-material-md">
+            <span className="text-white text-2xl">💚</span>
           </div>
-          <h3 className="text-xl font-bold text-white">Position Health</h3>
+          <h3 className="text-2xl font-bold text-surface-900">Position Health</h3>
         </div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-sm text-gray-400 mb-2">Collateralization Ratio</p>
-            <p className="text-3xl font-bold text-white">{collateralizationRatio}</p>
+            <p className="text-sm font-semibold text-surface-700 mb-3 uppercase tracking-wide">Collateralization Ratio</p>
+            <p className="text-4xl font-bold text-surface-900">{collateralizationRatio}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-400 mb-2">Status</p>
-            <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${getHealthDotColor(collateralizationRatio)}`}></div>
-              <p className={`text-lg font-semibold ${getHealthColor(collateralizationRatio)}`}>
+            <p className="text-sm font-semibold text-surface-700 mb-3 uppercase tracking-wide">Status</p>
+            <div className="flex items-center justify-end">
+              <div className={`w-4 h-4 rounded-full mr-3 ${getHealthDotColor(collateralizationRatio)}`}></div>
+              <p className={`text-xl font-bold ${getHealthColor(collateralizationRatio)}`}>
                 {getHealthStatus(collateralizationRatio)}
               </p>
             </div>
           </div>
         </div>
-        <div className="bg-gray-700/50 rounded-2xl h-3 overflow-hidden">
+        <div className="bg-surface-400 rounded-3xl h-4 overflow-hidden">
           <div
-            className={`h-3 rounded-2xl transition-all duration-500 ${getHealthBarColor(collateralizationRatio)}`}
+            className={`h-4 rounded-3xl transition-all duration-700 ease-out ${getHealthBarColor(collateralizationRatio)}`}
             style={{ width: `${Math.min(parseFloat(collateralizationRatio) || 0, 100)}%` }}
           ></div>
         </div>
@@ -119,41 +126,48 @@ interface StatCardProps {
   title: string;
   value: string;
   subtitle: string;
-  color: 'blue' | 'red' | 'green' | 'purple';
+  color: 'primary' | 'error' | 'success' | 'warning';
 }
 
 function StatCard({ title, value, subtitle, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/30',
-    red: 'bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-500/30',
-    green: 'bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/30',
-    purple: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/30',
+    primary: 'bg-gradient-to-br from-surface-200 to-surface-300 border-primary-400/50 hover:border-primary-500/70',
+    error: 'bg-gradient-to-br from-surface-200 to-surface-300 border-error-400/50 hover:border-error-500/70',
+    success: 'bg-gradient-to-br from-surface-200 to-surface-300 border-success-400/50 hover:border-success-500/70',
+    warning: 'bg-gradient-to-br from-surface-200 to-surface-300 border-warning-400/50 hover:border-warning-500/70',
   };
 
   const iconClasses = {
-    blue: 'bg-gradient-to-br from-blue-500 to-blue-600',
-    red: 'bg-gradient-to-br from-red-500 to-red-600',
-    green: 'bg-gradient-to-br from-green-500 to-green-600',
-    purple: 'bg-gradient-to-br from-purple-500 to-purple-600',
+    primary: 'bg-gradient-to-br from-primary-500 to-primary-600',
+    error: 'bg-gradient-to-br from-error-500 to-error-600',
+    success: 'bg-gradient-to-br from-success-500 to-success-600',
+    warning: 'bg-gradient-to-br from-warning-500 to-warning-600',
+  };
+
+  const textClasses = {
+    primary: 'text-surface-900',
+    error: 'text-surface-900',
+    success: 'text-surface-900',
+    warning: 'text-surface-900',
   };
 
   const icons = {
-    blue: '🔒',
-    red: '💰',
-    green: '💳',
-    purple: '🏛️',
+    primary: '🔒',
+    error: '💰',
+    success: '💳',
+    warning: '🏛️',
   };
 
   return (
-    <div className={`rounded-3xl border p-6 ${colorClasses[color]} backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-10 h-10 ${iconClasses[color]} rounded-2xl flex items-center justify-center shadow-lg`}>
-          <span className="text-white text-lg">{icons[color]}</span>
+    <div className={`rounded-4xl border-2 p-8 ${colorClasses[color]} backdrop-blur-xl shadow-material-lg hover:shadow-material-xl transition-all duration-300 hover:scale-105 animate-scale-in`}>
+      <div className="flex items-center justify-between mb-6">
+        <div className={`w-12 h-12 ${iconClasses[color]} rounded-3xl flex items-center justify-center shadow-material-md`}>
+          <span className="text-white text-xl">{icons[color]}</span>
         </div>
       </div>
-      <h3 className="text-sm font-medium text-gray-400 mb-2">{title}</h3>
-      <p className="text-2xl font-bold mb-1 text-white">{value}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <h3 className="text-sm font-bold text-surface-700 mb-3 uppercase tracking-wide">{title}</h3>
+      <p className={`text-3xl font-bold mb-2 ${textClasses[color]}`}>{value}</p>
+      <p className="text-sm text-surface-600 font-medium">{subtitle}</p>
     </div>
   );
 }
@@ -167,21 +181,21 @@ function getHealthStatus(ratio: string): string {
 
 function getHealthColor(ratio: string): string {
   const numRatio = parseFloat(ratio);
-  if (numRatio >= 200) return 'text-green-600';
-  if (numRatio >= 150) return 'text-yellow-600';
-  return 'text-red-600';
+  if (numRatio >= 200) return 'text-success-600';
+  if (numRatio >= 150) return 'text-warning-600';
+  return 'text-error-600';
 }
 
 function getHealthBarColor(ratio: string): string {
   const numRatio = parseFloat(ratio);
-  if (numRatio >= 200) return 'bg-gradient-to-r from-green-500 to-emerald-500';
-  if (numRatio >= 150) return 'bg-gradient-to-r from-yellow-500 to-orange-500';
-  return 'bg-gradient-to-r from-red-500 to-red-600';
+  if (numRatio >= 200) return 'bg-gradient-to-r from-success-500 to-success-600';
+  if (numRatio >= 150) return 'bg-gradient-to-r from-warning-500 to-warning-600';
+  return 'bg-gradient-to-r from-error-500 to-error-600';
 }
 
 function getHealthDotColor(ratio: string): string {
   const numRatio = parseFloat(ratio);
-  if (numRatio >= 200) return 'bg-green-500 shadow-lg shadow-green-500/50';
-  if (numRatio >= 150) return 'bg-yellow-500 shadow-lg shadow-yellow-500/50';
-  return 'bg-red-500 shadow-lg shadow-red-500/50';
+  if (numRatio >= 200) return 'bg-success-500 shadow-material-md';
+  if (numRatio >= 150) return 'bg-warning-500 shadow-material-md';
+  return 'bg-error-500 shadow-material-md';
 }

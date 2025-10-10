@@ -1,7 +1,7 @@
 import { useAccount, useWriteContract } from 'wagmi';
 import { CONTRACT_ADDRESSES } from '../config/contracts';
 import GemJoinABI from '../abis/GemJoin.json';
-import DaiJoinABI from '../abis/DaiJoin.json';
+import INRCJoinABI from '../abis/INRCJoin.json';
 import ERC20ABI from '../abis/ERC20.json';
 import { parseEther } from 'viem';
 import { useState } from 'react';
@@ -60,7 +60,7 @@ export function useBankingOperations() {
     }
   };
 
-  const borrowDAI = async (amount: string) => {
+  const borrowINRC = async (amount: string) => {
     if (!address) throw new Error('Wallet not connected');
 
     setIsLoading(true);
@@ -68,8 +68,8 @@ export function useBankingOperations() {
       const amountWei = parseEther(amount);
 
       const hash = await writeContractAsync({
-        address: CONTRACT_ADDRESSES.DAI_JOIN as `0x${string}`,
-        abi: DaiJoinABI,
+        address: CONTRACT_ADDRESSES.INRC_JOIN as `0x${string}`,
+        abi: INRCJoinABI,
         functionName: 'exit',
         args: [address, amountWei],
       });
@@ -80,7 +80,7 @@ export function useBankingOperations() {
     }
   };
 
-  const repayDAI = async (amount: string) => {
+  const repayINRC = async (amount: string) => {
     if (!address) throw new Error('Wallet not connected');
 
     setIsLoading(true);
@@ -92,13 +92,13 @@ export function useBankingOperations() {
         address: CONTRACT_ADDRESSES.STABLECOIN as `0x${string}`,
         abi: ERC20ABI,
         functionName: 'approve',
-        args: [CONTRACT_ADDRESSES.DAI_JOIN, amountWei],
+        args: [CONTRACT_ADDRESSES.INRC_JOIN, amountWei],
       });
 
       // Then repay
       const repayHash = await writeContractAsync({
-        address: CONTRACT_ADDRESSES.DAI_JOIN as `0x${string}`,
-        abi: DaiJoinABI,
+        address: CONTRACT_ADDRESSES.INRC_JOIN as `0x${string}`,
+        abi: INRCJoinABI,
         functionName: 'join',
         args: [address, amountWei],
       });
@@ -112,8 +112,8 @@ export function useBankingOperations() {
   return {
     depositCollateral,
     withdrawCollateral,
-    borrowDAI,
-    repayDAI,
+    borrowINRC,
+    repayINRC,
     isLoading,
   };
 }

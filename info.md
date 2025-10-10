@@ -48,3 +48,16 @@ and in this info the MKR is the governance token of makerDAO which is being used
 
 surpless mean overfill like having more then needded
 and debt mean being in loss
+Unbacked DAI basically means DAI that was minted without actual collateral
+
+
+collatralized auctoin when any user wallet is for liquidation so it bid the use collateral in exchange of inrc token add then pay the debt
+
+debt auction when thereis any unbacked system debt so the sys sell the MKR toke to repay the unbacked debt
+surplus auction when thier is any more than enough coin so system sells coin and purcahse governance token MKR
+
+
+dog contract is main liquidation engine 
+ds engine is for handling surplus and debt while there is surplus it calls Flopper and while thier is debt it calls liquidation engine
+
+and liquidation engine handles clipper auction 

@@ -8,6 +8,6 @@ WORKDIR /app
 COPY . .
 RUN forge build
 RUN forge test
- 
+
 # Set the entrypoint to the forge deployment command
 ENTRYPOINT ["forge", "create"]

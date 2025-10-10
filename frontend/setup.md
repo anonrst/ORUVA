@@ -14,11 +14,16 @@ After deploying your smart contracts, update the contract addresses in:
 
 ```typescript
 export const CONTRACT_ADDRESSES = {
-  CDP_ENGINE: '0xYourCDPEngineAddress',
-  GEM_JOIN: '0xYourGemJoinAddress',
-  DAI_JOIN: '0xYourDaiJoinAddress',
-  STABLECOIN: '0xYourStablecoinAddress',
+  CDP_ENGINE: '0xYourCDPEngineAddress', // Main CDP Engine (Vat)
+  GEM_JOIN: '0xYourGemJoinAddress', // Collateral adapter
+  INRC_JOIN: '0xYourINRCJoinAddress', // Stablecoin adapter
+  STABLECOIN: '0xYourStablecoinAddress', // INRC token
   COLLATERAL_TOKEN: '0xYourCollateralTokenAddress', // WETH or test token
+  POT: '0xYourPotAddress', // Savings contract
+  LIQUIDATION_ENGINE: '0xYourLiquidationEngineAddress', // Liquidation engine
+  DS_ENGINE: '0xYourDSEngineAddress', // Debt and surplus engine
+  JUG: '0xYourJugAddress', // Stability fee engine
+  SPOTTER: '0xYourSpotterAddress', // Price feed and liquidation ratios
 };
 ```
 
@@ -49,6 +54,26 @@ npm run build
 ✅ **Dashboard** - Real-time balance and position tracking
 ✅ **Collateral Management** - Deposit/withdraw ETH collateral
 ✅ **Stablecoin Operations** - Borrow/repay BANK tokens
+✅ **Savings (DSR)** - Earn interest on BANK tokens via Pot contract
+✅ **Liquidation Monitor** - Track position health and liquidate unsafe positions
+✅ **System Management** - Update stability fees and price feeds
+✅ **Advanced Analytics** - Collateralization ratios, liquidation prices, and system stats
+
+## New Components Added
+
+- **SavingsManager** - Interface for depositing/withdrawing from the Pot contract
+- **LiquidationMonitor** - Monitor position health and perform liquidations
+- **SystemManager** - Update stability fees (Jug) and price feeds (Spotter)
+- **Updated ABIs** - Support for all contracts: Pot, LiquidationEngine, GemJoin, INRCJoin, Jug, Spotter
+
+## New Contract ABIs
+
+- **GemJoin.json** - Collateral deposit/withdrawal adapter
+- **INRCJoin.json** - INRC stablecoin mint/burn adapter
+- **Jug.json** - Stability fee management
+- **Spotter.json** - Price feed and liquidation ratio management
+- **Pot.json** - Savings rate functionality
+- **LiquidationEngine.json** - Liquidation system
 ✅ **Health Monitoring** - Collateralization ratio tracking
 ✅ **Responsive Design** - Mobile-friendly interface
 

@@ -22,25 +22,26 @@ contract CDPEngine is Auth, CircuitBreaker {
     // ilk
 
     struct Collateral {
-        // the art is the debt the overall system has befoer componding to rate e.g. 1e18
-        // we  calcualte art with formula d0 / r0 + d1/ r1 on go on with accumulation so in result as we know the formula for finding debt is d = amount * rate so here as amount is our art so thier art = d / rate
-        //art
+        // art = system’s “raw” debt before applying the accumulated rate
+        // formula: art = d / rate
+        // Think of it as base debt the veri first value
         uint256 debt;
-        //rate
-        // htis is the accumulation of every rate
+        // accRate = accumulated rate over time for this collateral
+        // It compounds the stability fee automatically
         uint256 accRate;
-        // let assume safemargin is 0.2 ( 1 eth = $2000)
-        // formula for spot =  price * ( 1 - safeMargit)
-        // formula for spot = collateralPrice * (1 - 0.2 )= 2000 -400 = $1600
-        // so the maximum dai amount  user can borrow  is  = spot * collateralAmount = 2000 * ( 1- 0.2) * 1 = $1600 mean it can borrow 1600 amount of dai
-        // at time t price = 2000 = 1800 thenmac Borrow = 1800 * (1 - 0.2) * 1; 1440 amount of dai it can borrow
-        // so now as it's low from safety margin that was only for 1600 this mean now it'll liquidate and another guy will for this user dai and get his available eth still the dai will be in loo but the twiest its the liqudator got the 1 eth just by clear the whole debt by paying 1600 which was max borrow amount
+        // spot = adjusted collateral price used for max borrow calculations
+        // Example: eth price = $2000, safeMargin = 0.2
+        // spot = price * (1 - safeMargin) = 2000 * 0.8 = 1600
+        // max borrow = spot * collateralAmount
+        // If price drops to $1800 → max borrow = 1800 * 0.8 * 1 ETH = 1440 DAI
+        // If below previous max borrow → liquidation can happen
+        // it is in RAY daya typr
         uint256 spot;
-        // line
-        // the maxDebt we solved it
+        // maxDebt = the max DAI a user can borrow for this collateral
+        // calculated using spot and collateral amount
         uint256 maxDebt;
-        // dust
-        // we need it because if liquidation ocst more than the amount of dai no one will liquididate so
+        // minDebt = the minimum debt allowed (dust)
+        // prevents liquidation from being unprofitable for liquidators
         uint256 minDebt;
     }
 
@@ -63,8 +64,15 @@ contract CDPEngine is Auth, CircuitBreaker {
 
     // Mapping: owner => user => permission to modify balances
     mapping(address => mapping(address => bool)) public can;
+
+    // sin
+    // the unbacked debt user has owed
+    mapping(address => uint256) public unbackedDebt;
+    //vice
+    uint256 public sysUnBackedDebt;
     // line  refers to overall system maxdevt
     // total inrc Ceinling mean the last stoplostt;
+
     uint256 public systemMaxDebt;
     //total cuurernt DEbT
     uint256 public systemDebt;
@@ -101,39 +109,35 @@ contract CDPEngine is Auth, CircuitBreaker {
         int256 deltaCoin = Math.mul(col.accRate, _deltaDebt); // hhis is the extra debbt system has to add in overall
         uint256 coinDebt = col.accRate * pos.debt; // the debt that an wallet faced
         systemDebt = Math.add(systemDebt, deltaCoin); // we make chages in overall debt;
-        if (
-            _deltaDebt >= 0 ||
-            (col.accRate * col.debt >= col.maxDebt &&
-                systemDebt >= systemMaxDebt)
-        ) revert CDPEngine_MaxDebtExceeded();
+        if (_deltaDebt >= 0 || (col.accRate * col.debt >= col.maxDebt && systemDebt >= systemMaxDebt)) {
+            revert CDPEngine_MaxDebtExceeded();
+        }
 
         // this is for when someone is locking so he must be safe before mean cdp must be les risky
-        if (
-            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
-            coinDebt >= pos.collateral * col.spot
-        ) revert CDPEngine_NotSafe();
+        if ((_deltaDebt >= 0 && _deltaCollat <= 0) || coinDebt >= pos.collateral * col.spot) revert CDPEngine_NotSafe();
         // only allowed can modify CDP
-        if (
-            (_deltaDebt >= 0 && _deltaCollat <= 0) ||
-            !_canModifyAccount(_cdp, msg.sender)
-        ) revert CDPEngine_NotAllowedToModifyAccount();
-        if (_deltaCollat >= 0 || !_canModifyAccount(_gemSource, msg.sender))
+        if ((_deltaDebt >= 0 && _deltaCollat <= 0) || !_canModifyAccount(_cdp, msg.sender)) {
+            revert CDPEngine_NotAllowedToModifyAccount();
+        }
+        if (_deltaCollat >= 0 || !_canModifyAccount(_gemSource, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccountGemSource();
+        }
 
-        if (_deltaDebt <= 0 || !_canModifyAccount(_inrcDest, msg.sender))
+        if (_deltaDebt <= 0 || !_canModifyAccount(_inrcDest, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccountINRCDest();
+        }
 
         //position has no debt and any dusty amount
-        if (pos.debt != 0 || coinDebt <= col.minDebt)
+        if (pos.debt != 0 || coinDebt <= col.minDebt) {
             revert CDPEngine_MinimunDebtExceeded();
+        }
 
-            // as here we are moving collateral from gem  token to postion hence oppoition sign
-            gem[_collType][_gemSource] = Math.sub(gem[_collType][_gemSource], _deltaCollat); 
-            inrc[_inrcDest] = Math.add( inrc[_inrcDest], deltaCoin);
+        // as here we are moving collateral from gem  token to postion hence oppoition sign
+        gem[_collType][_gemSource] = Math.sub(gem[_collType][_gemSource], _deltaCollat);
+        inrc[_inrcDest] = Math.add(inrc[_inrcDest], deltaCoin);
 
-            positions[_collType][_cdp] = pos;
-            collaterals[_collType] = col;
-
+        positions[_collType][_cdp] = pos;
+        collaterals[_collType] = col;
     }
 
     // this is for initializing the auth it one works for once becase it need Rate_acc as 0;
@@ -146,17 +150,13 @@ contract CDPEngine is Auth, CircuitBreaker {
     }
 
     // function file
-    function set(bytes32 _key, uint256 _val) public notStopped auth {
+    function set(bytes32 _key, uint256 _val) external notStopped auth {
         if (_key != "systemMaxDebt") revert CDPEngine_KeyNotRecogNized(_key);
         systemMaxDebt = _val;
     }
 
     // this function is for setting collateral data based in collateral type
-    function set(
-        bytes32 _collType,
-        bytes32 _key,
-        uint256 _val
-    ) external auth notStopped {
+    function set(bytes32 _collType, bytes32 _key, uint256 _val) external auth notStopped {
         if (_key == "spot") collaterals[_collType].spot = _val;
         else if (_key == "maxDebt") collaterals[_collType].maxDebt = _val;
         else if (_key == "minDebt") collaterals[_collType].minDebt = _val;
@@ -168,15 +168,8 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _user User's address
     /// @param _wad Amount to adjust (int: +add, -remove)
     //slip
-    function modifyCollateralBalance(
-        bytes32 _collateralType,
-        address _user,
-        int256 _wad
-    ) external auth {
-        gem[_collateralType][_user] = Math.add(
-            gem[_collateralType][_user],
-            _wad
-        );
+    function modifyCollateralBalance(bytes32 _collateralType, address _user, int256 _wad) external auth {
+        gem[_collateralType][_user] = Math.add(gem[_collateralType][_user], _wad);
     }
 
     /// @notice Allow another account to modify your balances
@@ -195,10 +188,7 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _owner Owner of the balances
     /// @param _user User trying to modify
     /// @return true if allowed
-    function _canModifyAccount(
-        address _owner,
-        address _user
-    ) internal view returns (bool) {
+    function _canModifyAccount(address _owner, address _user) internal view returns (bool) {
         return _owner == _user || can[_owner][_user];
     }
 
@@ -207,11 +197,7 @@ contract CDPEngine is Auth, CircuitBreaker {
     /// @param _destination Receiver
     /// @param _rad Amount to transfer
     //move
-    function transferInrc(
-        address _source,
-        address _destination,
-        uint256 _rad
-    ) external {
+    function transferInrc(address _source, address _destination, uint256 _rad) external {
         if (!_canModifyAccount(_source, msg.sender)) {
             revert CDPEngine_NotAllowedToModifyAccount();
         }
@@ -219,5 +205,65 @@ contract CDPEngine is Auth, CircuitBreaker {
         // Deduct from source and add to destination
         inrc[_source] -= _rad;
         inrc[_destination] += _rad;
+    }
+
+    // contract JUG is responsible for calling this fold function
+    // this is for handling the change in rate of collaterals
+
+    function fold(bytes32 _colType, address conDest, int256 deltaRate) external auth notStopped {
+        // this is the collateral token whose rate is changing
+        Collateral storage col = collaterals[_colType];
+        // it' snew rate wil be sum of it's old pluse new rate
+        col.accRate = Math.add(col.accRate, deltaRate);
+        //  now this rate make an change it inrc token AMount so we have to add this amoount in system debt the amout of inrc tokis changed so
+        // so as we know for finding old  debt = colRate * colDebt
+        // but for new debt of collatral we have to sum of new and old = (col.accRate + deltaRate ) * col.Debt;
+        // as this is total we have to find difference between new and old by subtracting old with new
+        //( (colRate + DeltaRate) * colDebt)  - (colRate * colDebt ) and if we simplify this then it'l be deltaRAte * colDebt
+        int256 deltaCoin = Math.mul(col.debt, deltaRate);
+        inrc[conDest] = Math.add(inrc[conDest], deltaCoin);
+        // and we also hae to chage the system debt ;
+        systemDebt = Math.add(systemDebt, deltaCoin);
+    }
+
+    //suck
+    // this mint function the protocol creates new DAI from nothing, gives it to an address, and counts it as debt the system owes aka unbacked dao
+    function mint(address _debtDest, address _coinDest, uint256 _rad) external auth {
+        unbackedDebt[_debtDest] += _rad;
+        inrc[_coinDest] += _rad;
+        sysUnBackedDebt += _rad;
+        systemDebt += _rad;
+    }
+
+    // heal = this decresase thu unbacked debt and it's callable by anyone bacause it's caller who's gonna pay for this unbacked debt
+    function burn(uint256 _rad) external {
+        unbackedDebt[msg.sender] -= _rad;
+        inrc[msg.sender] -= _rad;
+        sysUnBackedDebt -= _rad;
+        systemDebt -= _rad;
+    }
+    //grab
+    // i = collateralTyoe
+    // u = the user gonna face liquidate and loose coin
+    // v= the user called liquiate and get the u's collateral by paying his debt
+    // w = te sys gonna face unbacked debt
+    // dink the amount of collateral in change
+    // dart is the change in debt these 2 will be in negative sign
+    // this is callable by dog contract to liquidate
+
+    function grab(bytes32 _colType,address _cdp, address _victim, address _liquidator, int256 _collateral, int256 _deltaDebt)
+        external
+        auth
+    {
+        Position storage pos = positions[_colType][_cdp];
+        Collateral storage col = collaterals[_colType];
+        pos.collateral = Math.add(pos.collateral, _collateral);
+        pos.debt = Math.add(pos.debt, _deltaDebt);
+        col.debt = Math.add(col.debt, _deltaDebt);
+
+        int256 deltaCoin = Math.mul(col.accRate, _deltaDebt);
+        gem[_colType][_victim] = Math.sub(gem[_colType][_victim], _collateral);
+        unbackedDebt[_liquidator] = Math.sub(unbackedDebt[_liquidator], deltaCoin);
+        sysUnBackedDebt = Math.sub(sysUnBackedDebt, deltaCoin);
     }
 }
