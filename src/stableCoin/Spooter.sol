@@ -7,6 +7,8 @@ import {CircuitBreaker} from "../lib/CircuitBreaker.sol";
 import {Math} from "../lib/Math.sol";
 
 interface IPriceFeed {
+    error PriceFeed_InvalidPrice();
+
     function peek() external returns (uint256, bool);
 }
 
@@ -22,7 +24,9 @@ contract Spotter is Auth, CircuitBreaker {
         // mat is ray e.g 1e27
         uint256 liquidationRatio; // this is the liquidation  ratio aka safety margin that deiced the minimum fund must e i an vault to not to be liquidate
     }
+
     event Poke(bytes32 _colType, uint256 _val, uint256 _spot);
+
     mapping(bytes32 => Collateral) public collaterals;
     uint256 public par; // it's the price of INRCToken to its refernce collateral basically its like the price oF DAI in terms of USD
 
@@ -33,22 +37,14 @@ contract Spotter is Auth, CircuitBreaker {
 
     // file
     // this is for chanhing the pricedFeed of collateral
-    function set(
-        bytes32 _colType,
-        bytes32 _key,
-        address _data
-    ) external auth notStopped {
+    function set(bytes32 _colType, bytes32 _key, address _data) external auth notStopped {
         if (_key != "priceFeed") revert SPotter_LeyNotRecognized(_key);
         collaterals[_colType].priceFeed = IPriceFeed(_data);
     }
 
     // file
     // for changing the liquidation ratio of collateral
-    function set(
-        bytes32 _colType,
-        bytes32 _key,
-        uint256 _data
-    ) external auth notStopped {
+    function set(bytes32 _colType, bytes32 _key, uint256 _data) external auth notStopped {
         if (_key != "liquidationRatio") revert SPotter_LeyNotRecognized(_key);
         collaterals[_colType].liquidationRatio = _data;
     }
@@ -66,12 +62,7 @@ contract Spotter is Auth, CircuitBreaker {
     function poke(bytes32 _colType) external {
         (uint256 price, bool isOk) = collaterals[_colType].priceFeed.peek();
         // If price, par, and liquidationRatio are all in ray (1e27), this will overflow or lose precision, because multiplying two rays gives 1e54 scale before division
-        uint256 spot = isOk
-            ? Math.rdiv(
-                Math.rdiv(price * 10 ** 9, par),
-                collaterals[_colType].liquidationRatio
-            )
-            : 0;
+        uint256 spot = isOk ? Math.rdiv(Math.rdiv(price * 10 ** 9, par), collaterals[_colType].liquidationRatio) : 0;
         cdpEngine.set(_colType, "spot", spot);
         emit Poke(_colType, price, spot);
     }

@@ -40,6 +40,10 @@ library Math {
         z = x >= y ? x : y;
     }
 
+    function wmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = (x * y) / WAD;
+    }
+
     function diff(uint256 x, uint256 y) internal pure returns (int256 z) {
         require(int256(x) >= 0 && int256(y) >= 0);
         z = int256(x) - int256(y);

@@ -61,3 +61,8 @@ dog contract is main liquidation engine
 ds engine is for handling surplus and debt while there is surplus it calls Flopper and while thier is debt it calls liquidation engine
 
 and liquidation engine handles clipper auction 
+
+the clipper contract is designed to handle on type of collateral Auction
+
+
+cdpEngine

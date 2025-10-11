@@ -5,26 +5,8 @@ import {Math, WAD} from "../lib/Math.sol";
 import {ICDPEngine} from "../interfaces/ICDPEngine.sol";
 import {CircuitBreaker} from "../lib/CircuitBreaker.sol";
 import {Auth} from "../lib/Auth.sol";
-
-interface ICOllateralAuction {
-    function collateralType() external view returns (bytes32);
-
-    function start(
-        // tab
-        uint256 inrcAmount,
-        //let
-        uint256 collAmount,
-        //user
-        address user,
-        //kpr
-        address keeper
-    ) external returns (uint256);
-}
-
-interface IDSEngine {
-    //fees
-    function pushDebtToQueue(uint256 debt) external;
-}
+import {ICOllateralAuction} from "../interfaces/ICollateralAuctoin.sol";
+import {IDSEngine} from "../interfaces/IDSEngine.sol";
 
 //dog it hadles call cliiper fpr auction
 
@@ -34,6 +16,7 @@ contract Liquidationengine is CircuitBreaker, Auth {
     error Liquidationengine_MathOverFlow();
     error Liquidationengine_NullAuction();
     error DustyActionFromPartialLiquidation();
+
     IDSEngine public dsEngine;
     ICDPEngine public cdpEngine;
     ICOllateralAuction public collateralAuction;
@@ -54,6 +37,7 @@ contract Liquidationengine is CircuitBreaker, Auth {
     // max dai token need to cover
     uint256 public maxCoin;
     // this run when user liquidated
+
     event Liquidate(
         bytes32 indexed colType,
         address indexed cdp,
@@ -63,6 +47,7 @@ contract Liquidationengine is CircuitBreaker, Auth {
         address auction,
         uint256 indexed id
     );
+
     mapping(bytes32 => Collateral) public collaterals;
 
     event Remove(bytes32 indexed colType, uint256 rad);
@@ -71,7 +56,7 @@ contract Liquidationengine is CircuitBreaker, Auth {
         cdpEngine = ICDPEngine(_cdpEngine);
     }
 
-    function getPenalty(bytes32 _colType) external view returns (uint256) {
+    function penalty(bytes32 _colType) external view returns (uint256) {
         return collaterals[_colType].penalty;
     }
 
@@ -93,43 +78,38 @@ contract Liquidationengine is CircuitBreaker, Auth {
 
         {
             //first it verify is collateral active or not then it verify the caollateral is in condition of liquiudation or not
-            if (
-                col.spot < 0 ||
-                pos.collateral * col.spot > pos.debt * col.accRate
-            ) revert Liquidationengine_NotUnSage();
-            if (
-                maxCoin <= totalCoin ||
-                collateral.maxAmount <= collateral.coinAmount
-            ) revert Liquidationengine_LiquidationLimit();
+            if (col.spot < 0 || pos.collateral * col.spot > pos.debt * col.accRate) {
+                revert Liquidationengine_NotUnSage();
+            }
+            if (maxCoin <= totalCoin || collateral.maxAmount <= collateral.coinAmount) {
+                revert Liquidationengine_LiquidationLimit();
+            }
 
             // how much minting space is left before hitting system limits.o this line ensures the liquidation doesn’t mint too much DAI beyond allowed limits.
             //room
-            uint256 room = Math.min(
-                maxCoin - totalCoin,
-                collateral.maxAmount - collateral.maxAmount
-            );
+            uint256 room = Math.min(maxCoin - totalCoin, collateral.maxAmount - collateral.maxAmount);
 
             // hte amount of debt actually to raise from auction
-            deltaDebt = Math.min(
-                pos.debt,
-                (room * WAD) / col.accRate / collateral.penalty
-            );
+            deltaDebt = Math.min(pos.debt, (room * WAD) / col.accRate / collateral.penalty);
             // not to liquidate if there is dust mean veery few amount left that cost hign and gives 0 profit
             if (pos.debt > deltaDebt) {
                 if ((pos.debt - deltaDebt) * col.accRate < col.minDebt) {
                     deltaDebt = pos.debt;
                 } else {
-                    if (deltaDebt * col.accRate < col.minDebt)
+                    if (deltaDebt * col.accRate < col.minDebt) {
                         revert DustyActionFromPartialLiquidation();
+                    }
                 }
             }
             // It’s how the system figures out how much collateral to seize when you’re only liquidating part of someone’s position.
         }
-        uint256 deltaCol = (pos.collateral / deltaDebt) / pos.debt;
+        // it calculates the proportional amount of collateral to seize for the part of the debt being cleared
+        uint256 deltaCol = (pos.collateral * deltaDebt) / pos.debt;
 
         if (deltaCol < 0) revert Liquidationengine_NullAuction();
-        if (deltaCol > 2 ** 255 - 1 && deltaDebt > 2 ** 255 - 1)
+        if (deltaCol > 2 ** 255 - 1 && deltaDebt > 2 ** 255 - 1) {
             revert Liquidationengine_MathOverFlow();
+        }
 
         // This is like the internal accounting hack. It’s just adjusting balances:
         // _collateral and _deltaDebt are negative because you’re taking them out of the CDP
@@ -162,22 +142,11 @@ contract Liquidationengine is CircuitBreaker, Auth {
                 keeper: _keeper
             });
         }
-        emit Liquidate(
-            _colType,
-            _cdp,
-            deltaCol,
-            deltaDebt,
-            due,
-            collateral.auction,
-            id
-        );
+        emit Liquidate(_colType, _cdp, deltaCol, deltaDebt, due, collateral.auction, id);
     }
 
     //dig:, this removes cin from auction
-    function removeCoinFromAuction(
-        bytes32 _colType,
-        uint256 rad
-    ) external auth {
+    function removeCoinFromAuction(bytes32 _colType, uint256 rad) external auth {
         totalCoin -= rad;
         collaterals[_colType].coinAmount -= rad;
         emit Remove(_colType, rad);
