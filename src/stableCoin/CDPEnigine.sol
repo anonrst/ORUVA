@@ -207,6 +207,15 @@ contract CDPEngine is Auth, CircuitBreaker {
         inrc[_destination] += _rad;
     }
 
+    function transferCollateral(bytes32 collTyoe, address _source, address _destination, uint256 _rad) external {
+        if (!_canModifyAccount(_source, msg.sender)) {
+            revert CDPEngine_NotAllowedToModifyAccount();
+        }
+        // Deduct from source and add to destination
+        gem[collTyoe][_source] -= _rad;
+        gem[collTyoe][_destination] += _rad;
+    }
+
     // contract JUG is responsible for calling this fold function
     // this is for handling the change in rate of collaterals
 
@@ -251,10 +260,14 @@ contract CDPEngine is Auth, CircuitBreaker {
     // dart is the change in debt these 2 will be in negative sign
     // this is callable by dog contract to liquidate
 
-    function grab(bytes32 _colType,address _cdp, address _victim, address _liquidator, int256 _collateral, int256 _deltaDebt)
-        external
-        auth
-    {
+    function grab(
+        bytes32 _colType,
+        address _cdp,
+        address _victim,
+        address _liquidator,
+        int256 _collateral,
+        int256 _deltaDebt
+    ) external auth {
         Position storage pos = positions[_colType][_cdp];
         Collateral storage col = collaterals[_colType];
         pos.collateral = Math.add(pos.collateral, _collateral);
