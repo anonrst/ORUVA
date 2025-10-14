@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
 export default function SettingsPage() {
-  const { logout } = useAuth();
+  const { logout, magic } = useAuth();
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'error' | 'warning' | 'default';
@@ -20,6 +20,26 @@ export default function SettingsPage() {
     twoFactorAuth: false,
     darkMode: false,
   });
+
+  const handleRevealPrivateKey = async () => {
+    try {
+      if (magic) {
+        await magic.user.revealEVMPrivateKey();
+      } else {
+        showNotification('Magic SDK not initialized', 'error');
+      }
+    } catch (error: any) {
+      // Check if the error is due to user cancellation
+      if (error?.code === -32603 && error?.message?.includes('User canceled action')) {
+        // User canceled the action, this is expected behavior - do nothing
+        return;
+      }
+
+      // Handle other actual errors
+      console.error('Error revealing private key:', error);
+      showNotification('Failed to reveal private key. Please try again.', 'error');
+    }
+  }
 
   const showNotification = (message: string, type: 'success' | 'error' | 'warning' | 'default' = 'default') => {
     setNotification({ message, type });
@@ -85,14 +105,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleSettingChange('emailNotifications')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                 />
               </button>
             </div>
@@ -108,14 +126,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleSettingChange('pushNotifications')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.pushNotifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.pushNotifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.pushNotifications ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.pushNotifications ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                 />
               </button>
             </div>
@@ -131,14 +147,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleSettingChange('marketingEmails')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.marketingEmails ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.marketingEmails ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.marketingEmails ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.marketingEmails ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                 />
               </button>
             </div>
@@ -163,14 +177,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleSettingChange('twoFactorAuth')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.twoFactorAuth ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.twoFactorAuth ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.twoFactorAuth ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.twoFactorAuth ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                 />
               </button>
             </div>
@@ -194,6 +206,16 @@ export default function SettingsPage() {
                 Log Out All Devices
               </Button>
             </div>
+
+            <div>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleRevealPrivateKey}
+              >
+                Show Private Key
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -215,14 +237,12 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleSettingChange('darkMode')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.darkMode ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.darkMode ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.darkMode ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.darkMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                 />
               </button>
             </div>
