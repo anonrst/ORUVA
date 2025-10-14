@@ -5,17 +5,35 @@ import {
  Magic,
  LoginWithEmailOTPEventOnReceived,
  LoginWithEmailOTPEventEmit,
- RecencyCheckEventOnReceived,
- RecencyCheckEventEmit,
  DeviceVerificationEventEmit,
  DeviceVerificationEventOnReceived,
 } from 'magic-sdk';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
+import { OTPModal } from '@/components/OTPModal';
+
+type NotificationState = {
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'default';
+} | null;
+
+type OTPModalState = {
+  isOpen: boolean;
+  title: string;
+  description: string;
+  type: 'email' | 'mfa';
+  error?: string;
+} | null;
 
 export default function Home() {
  const [email, setEmail] = useState("");
  const [isLoading, setIsLoading] = useState(false);
- const [error, setError] = useState<string | null>(null);
+ const [notification, setNotification] = useState<NotificationState>(null);
  const [magic, setMagic] = useState<Magic | null>(null);
+ const [otpModal, setOtpModal] = useState<OTPModalState>(null);
+ const [currentHandle, setCurrentHandle] = useState<any>(null);
 
  // Initialize Magic SDK
  useEffect(() => {
@@ -25,12 +43,38 @@ export default function Home() {
    }
  }, []);
 
+ const showNotification = (message: string, type: 'success' | 'error' | 'warning' | 'default' = 'default') => {
+   setNotification({ message, type });
+   setTimeout(() => setNotification(null), 5000);
+ };
+
+ const handleOTPSubmit = (otp: string) => {
+   if (!currentHandle) return;
+   
+   if (otpModal?.type === 'email') {
+     currentHandle.emit(LoginWithEmailOTPEventEmit.VerifyEmailOtp, otp);
+   } else if (otpModal?.type === 'mfa') {
+     currentHandle.emit(LoginWithEmailOTPEventEmit.VerifyMFACode, otp);
+   }
+   
+   setOtpModal(null);
+ };
+
+ const handleOTPCancel = () => {
+   if (currentHandle) {
+     currentHandle.emit(LoginWithEmailOTPEventEmit.Cancel);
+   }
+   setOtpModal(null);
+   setCurrentHandle(null);
+   setIsLoading(false);
+ };
+
  const handleSubmit = async (e: React.FormEvent) => {
    e.preventDefault();
    if (!magic || !email) return;
 
    setIsLoading(true);
-   setError(null);
+   setNotification(null);
 
    try {
      // Initiate login flow
@@ -40,105 +84,159 @@ export default function Home() {
        deviceCheckUI: false
      });
 
+     setCurrentHandle(handle);
+
      handle
        .on(LoginWithEmailOTPEventOnReceived.EmailOTPSent, () => {
-         // The email has been sent to the user
-         const otp = window.prompt('Enter Email OTP');
-         if (otp) {
-           // Send the OTP for verification
-           handle.emit(LoginWithEmailOTPEventEmit.VerifyEmailOtp, otp);
-         } else {
-           handle.emit(LoginWithEmailOTPEventEmit.Cancel);
-         }
+         setOtpModal({
+           isOpen: true,
+           title: 'Email Verification',
+           description: `We've sent a verification code to ${email}. Please enter it below.`,
+           type: 'email'
+         });
        })
        .on(LoginWithEmailOTPEventOnReceived.InvalidEmailOtp, () => {
-         // User entered invalid OTP
-         setError('Invalid OTP. Please try again.');
-         const retryOtp = window.prompt('Invalid OTP. Enter Email OTP again:');
-         if (retryOtp) {
-           handle.emit(LoginWithEmailOTPEventEmit.VerifyEmailOtp, retryOtp);
-         } else {
-           handle.emit(LoginWithEmailOTPEventEmit.Cancel);
-         }
+         setOtpModal(prev => prev ? {
+           ...prev,
+           error: 'Invalid verification code. Please try again.'
+         } : null);
        })
        .on('done', (result) => {
-         // is called when the Promise resolves
          setIsLoading(false);
-         alert('Login complete!');
+         setCurrentHandle(null);
+         showNotification('Login successful! Welcome back.', 'success');
          // DID Token returned in result
          const didToken = result;
          console.log('DID Token:', didToken);
        })
        .on('error', (reason) => {
-         // is called if the Promise rejects
          setIsLoading(false);
-         setError(reason?.message || 'Login failed');
+         setCurrentHandle(null);
+         setOtpModal(null);
+         showNotification(reason?.message || 'Login failed. Please try again.', 'error');
          console.error('Login error:', reason);
        })
        .on('settled', () => {
-         // is called when the Promise either resolves or rejects
          setIsLoading(false);
        })
 
        //** MFA Verification Events (if enabled for app)
        .on(LoginWithEmailOTPEventOnReceived.MfaSentHandle, () => {
-         const mfa_totp = window.prompt('Enter MFA TOTP');
-         if (mfa_totp) {
-           handle.emit(LoginWithEmailOTPEventEmit.VerifyMFACode, mfa_totp);
-         } else {
-           handle.emit(LoginWithEmailOTPEventEmit.Cancel);
-         }
+         setOtpModal({
+           isOpen: true,
+           title: 'Two-Factor Authentication',
+           description: 'Please enter your MFA code from your authenticator app.',
+           type: 'mfa'
+         });
        })
        .on(LoginWithEmailOTPEventOnReceived.InvalidMfaOtp, () => {
-         setError('Invalid MFA code. Please try again.');
-         const retryMfa = window.prompt('Invalid MFA code. Enter MFA TOTP again:');
-         if (retryMfa) {
-           handle.emit(LoginWithEmailOTPEventEmit.VerifyMFACode, retryMfa);
-         } else {
-           handle.emit(LoginWithEmailOTPEventEmit.Cancel);
-         }
+         setOtpModal(prev => prev ? {
+           ...prev,
+           error: 'Invalid MFA code. Please try again.'
+         } : null);
        })
 
        //** Device Verification Events (if enabled for app)
        .on(DeviceVerificationEventOnReceived.DeviceNeedsApproval, () => {
-         setError('Device needs approval. Please check your email.');
+         showNotification('Device needs approval. Please check your email.', 'warning');
        })
        .on(DeviceVerificationEventOnReceived.DeviceVerificationEmailSent, () => {
-         alert('Device verification email sent. Please check your email and approve the device.');
+         showNotification('Device verification email sent. Please check your email and approve the device.', 'default');
        })
        .on(DeviceVerificationEventOnReceived.DeviceApproved, () => {
-         alert('Device approved successfully!');
+         showNotification('Device approved successfully!', 'success');
        })
        .on(DeviceVerificationEventOnReceived.DeviceVerificationLinkExpired, () => {
-         setError('Device verification link expired. Retrying...');
+         showNotification('Device verification link expired. Retrying...', 'warning');
          handle.emit(DeviceVerificationEventEmit.Retry);
        });
 
    } catch (err) {
      setIsLoading(false);
-     setError('Error during login');
+     setCurrentHandle(null);
+     showNotification('Error during login. Please try again.', 'error');
      console.error('Error during login', err);
    }
  };
 
  return (
-   <div>
-     <form onSubmit={handleSubmit}>
-       <label htmlFor="email">Email:</label>
-       <input
-         type="email"
-         id="email"
-         name="email"
-         value={email}
-         onChange={(e) => setEmail(e.target.value)}
-         required
-         disabled={isLoading}
+   <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+     <div className="w-full max-w-md space-y-6">
+       {/* Header */}
+       <div className="text-center space-y-2">
+         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+           Welcome Back
+         </h1>
+         <p className="text-gray-600 dark:text-gray-400">
+           Sign in to your account using Magic Link
+         </p>
+       </div>
+
+       {/* Login Card */}
+       <Card>
+         <CardHeader>
+           <CardTitle>Sign In</CardTitle>
+           <CardDescription>
+             Enter your email address to receive a secure login link
+           </CardDescription>
+         </CardHeader>
+         <CardContent>
+           <form onSubmit={handleSubmit} className="space-y-4">
+             <Input
+               type="email"
+               label="Email Address"
+               placeholder="Enter your email"
+               value={email}
+               onChange={(e) => setEmail(e.target.value)}
+               required
+               disabled={isLoading}
+             />
+             
+             <Button 
+               type="submit" 
+               disabled={isLoading || !email.trim()}
+               isLoading={isLoading}
+               className="w-full"
+             >
+               {isLoading ? 'Sending Magic Link...' : 'Send Magic Link'}
+             </Button>
+           </form>
+         </CardContent>
+       </Card>
+
+       {/* Notifications */}
+       {notification && (
+         <Alert variant={notification.type}>
+           {notification.message}
+         </Alert>
+       )}
+
+       {/* Footer */}
+       <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+         <p>
+           By signing in, you agree to our{' '}
+           <a href="#" className="text-blue-600 hover:text-blue-500 dark:text-blue-400">
+             Terms of Service
+           </a>{' '}
+           and{' '}
+           <a href="#" className="text-blue-600 hover:text-blue-500 dark:text-blue-400">
+             Privacy Policy
+           </a>
+         </p>
+       </div>
+     </div>
+
+     {/* OTP Modal */}
+     {otpModal && (
+       <OTPModal
+         isOpen={otpModal.isOpen}
+         title={otpModal.title}
+         description={otpModal.description}
+         error={otpModal.error}
+         onSubmit={handleOTPSubmit}
+         onCancel={handleOTPCancel}
        />
-       <button type="submit" disabled={isLoading || !email}>
-         {isLoading ? 'Logging in...' : 'Submit'}
-       </button>
-     </form>
-     {error && <p style={{ color: 'red' }}>{error}</p>}
+     )}
    </div>
  );
 }
