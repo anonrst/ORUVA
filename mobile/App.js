@@ -1,0 +1,127 @@
+import { Magic } from "@magic-sdk/react-native-expo";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Button,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+const magic = new Magic(process.env.EXPO_PUBLIC_MAGIC_API_KEY);
+
+export default function App() {
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+
+  // Check if we are logged in and fetch the user info
+
+  // Login with a Magic link and dismiss keyboard
+  const onMagicLogin = useCallback(async () => {
+    Keyboard.dismiss();
+    setLoading(true);
+    try {
+      console.log('Attempting login with email:', email);
+      await magic.auth.loginWithEmailOTP({ email });
+      const userData = await magic.user.getMetadata();
+      console.log('Login successful, user data:', userData);
+      setUser(userData);
+    } catch (error) {
+      console.error('Magic login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [email]);
+
+  // Log out and restore the initial state to show the login form
+  const onMagicLogout = useCallback(async () => {
+    setLoading(true);
+    try {
+      await magic.user.logout();
+      setUser(null);
+      setEmail("");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // When the app loads, check if we have an existing session
+  useEffect(function didMount() {
+    // Temporarily disable initial check to test login functionality
+    // const timer = setTimeout(() => {
+    //   onMagicCheck();
+    // }, 100);
+
+    // return () => clearTimeout(timer);
+    setLoading(false); // Ensure loading is false on app start
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {user && (
+          // User is authenticated, show user info
+          <>
+            <Text style={styles.paragraph}>Hi {user.email}!</Text>
+            <Text style={styles.code}>{JSON.stringify(user, null, 2)}</Text>
+            <Button
+              disabled={loading}
+              title={loading ? "loading..." : "logout"}
+              onPress={onMagicLogout}
+            />
+          </>
+        )}
+        {!user && (
+          // User is not authenticated, show login form
+          <>
+            <Text style={styles.paragraph}>
+              Enter your email to authenticate
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              textContentType="emailAddress"
+            />
+            <Button
+              disabled={loading}
+              title={loading ? "loading..." : "login"}
+              onPress={onMagicLogin}
+            />
+          </>
+        )}
+      </View>
+      {/* This is required for the overlay to render */}
+      <magic.Relayer />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ecf0f1",
+  },
+  content: {
+    padding: 8,
+    maxWidth: 800,
+  },
+  paragraph: {
+    margin: 24,
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  code: {
+    margin: 16,
+  },
+  input: {
+    marginVertical: 16,
+    padding: 12,
+    backgroundColor: "#e5e5e5",
+  },
+});
